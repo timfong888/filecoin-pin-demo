@@ -1,4 +1,5 @@
 # Filecoin Pin CLI + GitHub Actions Walkthrough
+> Update: 10.10.2025 10:00 AM PST
 
 **How to use the Filecoin Pin CLI and creating GitHub Actions from the terminal**
 
@@ -105,7 +106,6 @@ Generate a new Ethereum-compatible private key for Filecoin Calibration testnet:
 node -e "const crypto = require('crypto'); const pk = '0x' + crypto.randomBytes(32).toString('hex'); console.log('Private Key:', pk);"
 ```
 
-![alt text](screenshots/01-generate-wallet.png)
 
 
 **Option 2: Using cast (if you have Foundry)**
@@ -257,7 +257,7 @@ Balance: 200 FIL
 filecoin-pin payments status --private-key $PRIVATE_KEY --rpc-url $RPC_URL
 ```
 
-**Expected Output (after ChainSafe faucet - 100 tFIL):**
+**Expected Output (after ChainSafe faucet 2x - 200 tFIL):**
 ```
 Filecoin Onchain Cloud Payment Status
 
@@ -374,7 +374,9 @@ Status check complete
 
 ### Step 0.5: Create Environment File
 
-Save your credentials for easy reuse:
+> I put my private key on this repo for DEMO purposes.  It is a TESTNET KEY.  **NEVER USE YOUR PRIVATE KEY IN A REPOSITORY OR EXPOSE IT**.
+
+Save your credentials **locally** for easy reuse:
 
 ```bash
 cat > ~/.filecoin-pin-env << 'EOF'
@@ -675,8 +677,6 @@ Transaction
 Add completed successfully
 ```
 
-![Upload File Output](screenshots/08-upload-file.png)
-
 **Key values explained:**
 - **Root CID**: `bafybeibh422kjvgfmymx6nr7jandwngrown6ywomk4vplayl4de2x553t4` - IPFS content identifier for your data
 - **Piece CID**: `bafkzcibcfab4grpgq6e6rva4kfuxfcvibdzx3kn2jdw6q3zqgwt5cou7j6k4wfq` - Filecoin piece commitment (cryptographic proof)
@@ -711,7 +711,6 @@ gversion
 Hello Filecoin from CLI!
 ```
 
-![Verify Download](screenshots/09-verify-download.png)
 
 **What we verified:**
 - ✅ File downloaded successfully (214 bytes)
@@ -891,10 +890,9 @@ total 24
 -rw-r--r--  1 user  staff   7B Oct  9 17:22 file2.txt
 -rw-r--r--  1 user  staff   7B Oct  9 17:22 file3.txt
 
-✓ Directories are identical!
+Directories are identical!
 ```
 
-![Verify Directory](screenshots/12-verify-directory.png)
 
 **What we verified:**
 - ✅ Valid CAR file format (contains `eroots` and `version` markers)
@@ -931,6 +929,9 @@ Transaction: 0x...
 ### Command 6: List All Data Sets
 
 View all data sets you've created:
+
+> FYI `filecoin-pin data-set --ls` might be changing to filecoin-pin data list
+> Tracking at https://github.com/filecoin-project/filecoin-pin/issues/66
 
 ```bash
 filecoin-pin data-set --ls
@@ -1257,6 +1258,8 @@ FILECOIN_RPC_URL        Updated 2025-10-09
 
 ### Step 3: Create Workflow - Upload File
 
+>  we have a tracking issue for making extraction from `filecoin-pin add upload.txt 2>&1 | tee result.txt`easier: https://github.com/filecoin-project/filecoin-pin/issues/4
+
 ```bash
 mkdir -p .github/workflows
 
@@ -1573,6 +1576,7 @@ filecoin-pin import <car-file>            # Import CAR
 # Data Set Management
 filecoin-pin data-set --ls                # List all
 filecoin-pin data-set <id>                # Inspect specific
+filecoin-pin data-set --ls might be changing to `filecoin-pin data list` # https://github.com/filecoin-project/filecoin-pin/issues/66 
 ```
 
 ### GitHub CLI Commands
@@ -1624,4 +1628,4 @@ open "https://calibration.filfox.info/tx/<tx-hash>"
 
 ---
 
-**End of Walkthrough**
+
