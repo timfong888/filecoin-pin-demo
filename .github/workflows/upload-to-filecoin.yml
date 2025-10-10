@@ -51,8 +51,8 @@ jobs:
           echo "DATASET_ID=$DATASET_ID" >> $GITHUB_ENV
           echo "TX_HASH=$TX_HASH" >> $GITHUB_ENV
           
-          # Create log file
-          TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          # Create log file (using filename-friendly timestamp)
+          TIMESTAMP=$(date -u +"%Y-%m-%d-%H%M%S")
           LOG_FILE="logs/upload-${TIMESTAMP}.md"
 
           # Write log content
