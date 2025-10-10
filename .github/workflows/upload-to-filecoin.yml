@@ -1,0 +1,137 @@
+name: Upload to Filecoin
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  upload:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install filecoin-pin
+        run: npm install -g filecoin-pin
+
+      - name: Create logs directory
+        run: mkdir -p logs
+
+      - name: Upload repository to Filecoin
+        env:
+          PRIVATE_KEY: ${{ secrets.FILECOIN_PRIVATE_KEY }}
+          RPC_URL: ${{ secrets.FILECOIN_RPC_URL }}
+        run: |
+          # Upload entire repo
+          OUTPUT=$(filecoin-pin add . 2>&1 | tee upload-output.txt)
+          
+          # Extract metadata
+          ROOT_CID=$(echo "$OUTPUT" | grep 'Root CID:' | awk '{print $3}' || echo "N/A")
+          PIECE_CID=$(echo "$OUTPUT" | grep 'Piece CID:' | awk '{print $3}' || echo "N/A")
+          SIZE=$(echo "$OUTPUT" | grep 'Size:' | awk '{print $2}' || echo "N/A")
+          PIECE_ID=$(echo "$OUTPUT" | grep 'Piece ID:' | awk '{print $3}' || echo "N/A")
+          DATASET_ID=$(echo "$OUTPUT" | grep 'Data Set ID:' | awk '{print $4}' || echo "N/A")
+          PROVIDER=$(echo "$OUTPUT" | grep 'Name:' | awk '{print $2}' || echo "N/A")
+          TX_HASH=$(echo "$OUTPUT" | grep 'Hash:' | awk '{print $2}' || echo "N/A")
+          DOWNLOAD_URL=$(echo "$OUTPUT" | grep 'Direct Download URL:' | awk '{print $4}' || echo "N/A")
+          
+          # Save to environment
+          echo "ROOT_CID=$ROOT_CID" >> $GITHUB_ENV
+          echo "PIECE_CID=$PIECE_CID" >> $GITHUB_ENV
+          echo "SIZE=$SIZE" >> $GITHUB_ENV
+          echo "DATASET_ID=$DATASET_ID" >> $GITHUB_ENV
+          echo "TX_HASH=$TX_HASH" >> $GITHUB_ENV
+          
+          # Create log file
+          TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          LOG_FILE="logs/upload-${TIMESTAMP}.md"
+
+          # Write log content
+          echo "# Filecoin Upload Log" > "$LOG_FILE"
+          echo "" >> "$LOG_FILE"
+          echo "**Upload Time**: ${TIMESTAMP}" >> "$LOG_FILE"
+          echo "**Commit**: ${{ github.sha }}" >> "$LOG_FILE"
+          echo "**Triggered by**: ${{ github.event_name }}" >> "$LOG_FILE"
+          echo "" >> "$LOG_FILE"
+          echo "## Upload Metadata" >> "$LOG_FILE"
+          echo "" >> "$LOG_FILE"
+          echo "| Field | Value |" >> "$LOG_FILE"
+          echo "|-------|-------|" >> "$LOG_FILE"
+          echo "| **Root CID** | \`${ROOT_CID}\` |" >> "$LOG_FILE"
+          echo "| **Piece CID** | \`${PIECE_CID}\` |" >> "$LOG_FILE"
+          echo "| **Size** | ${SIZE} |" >> "$LOG_FILE"
+          echo "| **Piece ID** | ${PIECE_ID} |" >> "$LOG_FILE"
+          echo "| **Data Set ID** | ${DATASET_ID} |" >> "$LOG_FILE"
+          echo "| **Storage Provider** | ${PROVIDER} |" >> "$LOG_FILE"
+          echo "| **Transaction Hash** | \`${TX_HASH}\` |" >> "$LOG_FILE"
+          echo "| **Direct Download URL** | ${DOWNLOAD_URL} |" >> "$LOG_FILE"
+          echo "" >> "$LOG_FILE"
+          echo "## IPFS Gateway Links" >> "$LOG_FILE"
+          echo "" >> "$LOG_FILE"
+          echo "- **Browse repository**: https://ipfs.io/ipfs/${ROOT_CID}" >> "$LOG_FILE"
+          echo "- **View walkthrough**: https://ipfs.io/ipfs/${ROOT_CID}/DEMO_WALKTHROUGH.md" >> "$LOG_FILE"
+          echo "- **Screenshots directory**: https://ipfs.io/ipfs/${ROOT_CID}/screenshots/" >> "$LOG_FILE"
+          echo "" >> "$LOG_FILE"
+          echo "## Transaction Details" >> "$LOG_FILE"
+          echo "" >> "$LOG_FILE"
+          echo "View on block explorer: https://calibration.filfox.info/tx/${TX_HASH}" >> "$LOG_FILE"
+          echo "" >> "$LOG_FILE"
+          echo "## File Structure" >> "$LOG_FILE"
+          echo "" >> "$LOG_FILE"
+          echo "The Root CID contains the complete repository structure:" >> "$LOG_FILE"
+          echo "- \`DEMO_WALKTHROUGH.md\` - Main documentation" >> "$LOG_FILE"
+          echo "- \`screenshots/\` - All 15 screenshots" >> "$LOG_FILE"
+          echo "- Markdown relative paths resolve correctly from the Root CID" >> "$LOG_FILE"
+          echo "" >> "$LOG_FILE"
+          echo "## Raw Output" >> "$LOG_FILE"
+          echo "" >> "$LOG_FILE"
+          echo "\`\`\`" >> "$LOG_FILE"
+          cat upload-output.txt >> "$LOG_FILE"
+          echo "\`\`\`" >> "$LOG_FILE"
+
+          echo "LOG_FILE=$LOG_FILE" >> $GITHUB_ENV
+
+      - name: Commit upload log
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add logs/
+          git commit -m "docs: add upload log for commit ${{ github.sha }}" || echo "No changes to commit"
+          git push
+
+      - name: Create Summary
+        run: |
+          echo "# 📦 Repository Uploaded to Filecoin" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Quick Access" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "🔗 **View Walkthrough**: https://ipfs.io/ipfs/${{ env.ROOT_CID }}/DEMO_WALKTHROUGH.md" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📁 **Browse All Files**: https://ipfs.io/ipfs/${{ env.ROOT_CID }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Upload Metadata" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Root CID**: \`${{ env.ROOT_CID }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Piece CID**: \`${{ env.PIECE_CID }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Size**: ${{ env.SIZE }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Data Set**: #${{ env.DATASET_ID }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Transaction**: [\`${{ env.TX_HASH }}\`](https://calibration.filfox.info/tx/${{ env.TX_HASH }})" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📝 **Upload log saved**: \`${{ env.LOG_FILE }}\`" >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: upload-log
+          path: |
+            logs/
+            upload-output.txt

@@ -1,0 +1,41 @@
+name: List Data Sets
+
+on:
+  workflow_dispatch:
+
+jobs:
+  list:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install filecoin-pin
+        run: npm install -g filecoin-pin
+
+      - name: List All Data Sets
+        env:
+          PRIVATE_KEY: ${{ secrets.FILECOIN_PRIVATE_KEY }}
+          RPC_URL: ${{ secrets.FILECOIN_RPC_URL }}
+        run: |
+          filecoin-pin data-set --ls | tee datasets.txt
+
+      - name: Create Report
+        run: |
+          {
+            echo "# Filecoin Data Sets Report"
+            echo ""
+            echo "**Generated:** $(date -u)"
+            echo ""
+            echo '```'
+            cat datasets.txt
+            echo '```'
+          } > report.md
+
+      - name: Upload Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: datasets-report
+          path: report.md

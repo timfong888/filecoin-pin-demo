@@ -1,0 +1,29 @@
+name: Check Payment Status
+
+on:
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install filecoin-pin
+        run: npm install -g filecoin-pin
+
+      - name: Check Payment Status
+        env:
+          PRIVATE_KEY: ${{ secrets.FILECOIN_PRIVATE_KEY }}
+          RPC_URL: ${{ secrets.FILECOIN_RPC_URL }}
+        run: |
+          filecoin-pin payments status | tee payment-status.txt
+
+      - name: Upload Status Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: payment-status
+          path: payment-status.txt
