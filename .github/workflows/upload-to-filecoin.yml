@@ -121,6 +121,29 @@ jobs:
           echo "- **View walkthrough**: https://${ROOT_CID}.ipfs.dweb.link/DEMO_WALKTHROUGH.md" >> "$LOG_FILE"
           echo "- **Screenshots directory**: https://${ROOT_CID}.ipfs.dweb.link/screenshots/" >> "$LOG_FILE"
           echo "" >> "$LOG_FILE"
+
+          # Test gateway retrieval times
+          echo "## Gateway Performance" >> "$LOG_FILE"
+          echo "" >> "$LOG_FILE"
+          echo "Testing retrieval from both gateways (timeout: 30s)..." >> "$LOG_FILE"
+          echo "" >> "$LOG_FILE"
+
+          # Test ipfs.io gateway
+          echo "### ipfs.io Gateway Test" >> "$LOG_FILE"
+          IPFS_IO_RESULT=$(curl -s -o /dev/null -m 30 -w "HTTP %{http_code} | Total: %{time_total}s | DNS: %{time_namelookup}s | Connect: %{time_connect}s | Transfer: %{time_starttransfer}s | Size: %{size_download} bytes" "https://ipfs.io/ipfs/${ROOT_CID}/DEMO_WALKTHROUGH.md" 2>&1 || echo "Connection failed or timeout")
+          echo "\`\`\`" >> "$LOG_FILE"
+          echo "$IPFS_IO_RESULT" >> "$LOG_FILE"
+          echo "\`\`\`" >> "$LOG_FILE"
+          echo "" >> "$LOG_FILE"
+
+          # Test dweb.link gateway
+          echo "### dweb.link Gateway Test" >> "$LOG_FILE"
+          DWEB_RESULT=$(curl -s -o /dev/null -m 30 -w "HTTP %{http_code} | Total: %{time_total}s | DNS: %{time_namelookup}s | Connect: %{time_connect}s | Transfer: %{time_starttransfer}s | Size: %{size_download} bytes" "https://${ROOT_CID}.ipfs.dweb.link/DEMO_WALKTHROUGH.md" 2>&1 || echo "Connection failed or timeout")
+          echo "\`\`\`" >> "$LOG_FILE"
+          echo "$DWEB_RESULT" >> "$LOG_FILE"
+          echo "\`\`\`" >> "$LOG_FILE"
+          echo "" >> "$LOG_FILE"
+
           echo "## Transaction Details" >> "$LOG_FILE"
           echo "" >> "$LOG_FILE"
           echo "View on block explorer: https://calibration.filfox.info/tx/${TX_HASH}" >> "$LOG_FILE"
