@@ -111,9 +111,20 @@ jobs:
 
           echo "## IPFS Gateway Links" >> "$LOG_FILE"
           echo "" >> "$LOG_FILE"
+          echo "### ipfs.io Gateway" >> "$LOG_FILE"
           echo "- **Browse repository**: https://ipfs.io/ipfs/${ROOT_CID}" >> "$LOG_FILE"
           echo "- **View walkthrough**: https://ipfs.io/ipfs/${ROOT_CID}/DEMO_WALKTHROUGH.md" >> "$LOG_FILE"
           echo "- **Screenshots directory**: https://ipfs.io/ipfs/${ROOT_CID}/screenshots/" >> "$LOG_FILE"
+          echo "" >> "$LOG_FILE"
+          echo "### dweb.link Gateway" >> "$LOG_FILE"
+          echo "- **Browse repository**: https://${ROOT_CID}.ipfs.dweb.link/" >> "$LOG_FILE"
+          echo "- **View walkthrough**: https://${ROOT_CID}.ipfs.dweb.link/DEMO_WALKTHROUGH.md" >> "$LOG_FILE"
+          echo "- **Screenshots directory**: https://${ROOT_CID}.ipfs.dweb.link/screenshots/" >> "$LOG_FILE"
+          echo "" >> "$LOG_FILE"
+          echo "### localhost Gateway (requires local IPFS node)" >> "$LOG_FILE"
+          echo "- **Browse repository**: http://${ROOT_CID}.ipfs.localhost:8080/" >> "$LOG_FILE"
+          echo "- **View walkthrough**: http://${ROOT_CID}.ipfs.localhost:8080/DEMO_WALKTHROUGH.md" >> "$LOG_FILE"
+          echo "- **Screenshots directory**: http://${ROOT_CID}.ipfs.localhost:8080/screenshots/" >> "$LOG_FILE"
           echo "" >> "$LOG_FILE"
           echo "## Transaction Details" >> "$LOG_FILE"
           echo "" >> "$LOG_FILE"
@@ -148,9 +159,20 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "## Quick Access" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### ipfs.io Gateway" >> $GITHUB_STEP_SUMMARY
           echo "🔗 **View Walkthrough**: https://ipfs.io/ipfs/${{ env.ROOT_CID }}/DEMO_WALKTHROUGH.md" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "📁 **Browse All Files**: https://ipfs.io/ipfs/${{ env.ROOT_CID }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### dweb.link Gateway" >> $GITHUB_STEP_SUMMARY
+          echo "🔗 **View Walkthrough**: https://${{ env.ROOT_CID }}.ipfs.dweb.link/DEMO_WALKTHROUGH.md" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📁 **Browse All Files**: https://${{ env.ROOT_CID }}.ipfs.dweb.link/" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### localhost Gateway (requires local IPFS node)" >> $GITHUB_STEP_SUMMARY
+          echo "🔗 **View Walkthrough**: http://${{ env.ROOT_CID }}.ipfs.localhost:8080/DEMO_WALKTHROUGH.md" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📁 **Browse All Files**: http://${{ env.ROOT_CID }}.ipfs.localhost:8080/" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "## Upload Metadata" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
