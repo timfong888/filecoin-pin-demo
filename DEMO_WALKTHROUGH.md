@@ -1,5 +1,5 @@
 # Filecoin Pin CLI + GitHub Actions Walkthrough
-> Update: 10.10.2025 10:00 AM PST
+> Update: 10.11.2025 7:40 AM PDT
 
 **How to use the Filecoin Pin CLI and creating GitHub Actions from the terminal**
 
@@ -701,7 +701,7 @@ Manually adjust your payment runway after uploading files (alternative to `--aut
 
 **Set exact runway in days:**
 ```bash
-filecoin-pin payments fund --exact-days 57
+filecoin-pin payments fund --days 57
 ```
 
 **What this does:**
@@ -750,7 +750,7 @@ Action: Withdraw 44.3 USDFC
 
 **Set exact deposit amount:**
 ```bash
-filecoin-pin payments fund --exact-amount 100
+filecoin-pin payments fund --amount 100
 ```
 
 **What this does:**
