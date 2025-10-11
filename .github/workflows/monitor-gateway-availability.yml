@@ -1,0 +1,164 @@
+name: Monitor Gateway Availability
+
+on:
+  schedule:
+    # Run every 30 minutes
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  monitor:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Get latest upload CID
+        id: get_cid
+        run: |
+          # Find the most recent upload log
+          LATEST_LOG=$(ls -t logs/upload-*.md | head -n 1)
+
+          if [ -z "$LATEST_LOG" ]; then
+            echo "No upload logs found"
+            exit 1
+          fi
+
+          echo "Latest log: $LATEST_LOG"
+
+          # Extract Root CID from the log
+          ROOT_CID=$(grep "Root CID" "$LATEST_LOG" | head -n 1 | sed 's/.*`\(bafybei[^`]*\)`.*/\1/')
+
+          if [ -z "$ROOT_CID" ]; then
+            echo "Could not extract Root CID from log"
+            exit 1
+          fi
+
+          echo "ROOT_CID=$ROOT_CID" >> $GITHUB_OUTPUT
+          echo "LATEST_LOG=$LATEST_LOG" >> $GITHUB_OUTPUT
+          echo "Monitoring CID: $ROOT_CID"
+
+      - name: Test Gateway Availability
+        id: test_gateways
+        run: |
+          ROOT_CID="${{ steps.get_cid.outputs.ROOT_CID }}"
+          TIMESTAMP=$(date -u +"%Y-%m-%d %H:%M:%S UTC")
+
+          echo "Testing gateways at: $TIMESTAMP"
+
+          # Test ipfs.io gateway
+          echo "Testing ipfs.io..."
+          IPFS_IO_RESULT=$(curl -s -o /dev/null -m 30 -w "HTTP %{http_code} | Total: %{time_total}s | DNS: %{time_namelookup}s | Connect: %{time_connect}s | Transfer: %{time_starttransfer}s | Size: %{size_download} bytes" "https://ipfs.io/ipfs/${ROOT_CID}/DEMO_WALKTHROUGH.md" 2>&1 || echo "Connection failed or timeout")
+          IPFS_IO_STATUS=$(echo "$IPFS_IO_RESULT" | grep -oP 'HTTP \K\d+' || echo "000")
+
+          echo "ipfs.io result: $IPFS_IO_RESULT"
+
+          # Test dweb.link gateway
+          echo "Testing dweb.link..."
+          DWEB_RESULT=$(curl -s -o /dev/null -m 30 -w "HTTP %{http_code} | Total: %{time_total}s | DNS: %{time_namelookup}s | Connect: %{time_connect}s | Transfer: %{time_starttransfer}s | Size: %{size_download} bytes" "https://${ROOT_CID}.ipfs.dweb.link/DEMO_WALKTHROUGH.md" 2>&1 || echo "Connection failed or timeout")
+          DWEB_STATUS=$(echo "$DWEB_RESULT" | grep -oP 'HTTP \K\d+' || echo "000")
+
+          echo "dweb.link result: $DWEB_RESULT"
+
+          # Save results to outputs
+          echo "TIMESTAMP=$TIMESTAMP" >> $GITHUB_OUTPUT
+          echo "IPFS_IO_RESULT=$IPFS_IO_RESULT" >> $GITHUB_OUTPUT
+          echo "DWEB_RESULT=$DWEB_RESULT" >> $GITHUB_OUTPUT
+          echo "IPFS_IO_STATUS=$IPFS_IO_STATUS" >> $GITHUB_OUTPUT
+          echo "DWEB_STATUS=$DWEB_STATUS" >> $GITHUB_OUTPUT
+
+      - name: Create/Update Monitoring Log
+        run: |
+          ROOT_CID="${{ steps.get_cid.outputs.ROOT_CID }}"
+          LATEST_LOG="${{ steps.get_cid.outputs.LATEST_LOG }}"
+          TIMESTAMP="${{ steps.test_gateways.outputs.TIMESTAMP }}"
+
+          # Extract upload timestamp from log filename
+          UPLOAD_TIME=$(echo "$LATEST_LOG" | sed 's/logs\/upload-\(.*\)\.md/\1/')
+
+          # Create monitoring log filename based on upload
+          MONITOR_LOG="logs/monitor-${UPLOAD_TIME}.md"
+
+          # Create monitoring log if it doesn't exist
+          if [ ! -f "$MONITOR_LOG" ]; then
+            echo "# Gateway Availability Monitoring" > "$MONITOR_LOG"
+            echo "" >> "$MONITOR_LOG"
+            echo "**Upload Time**: ${UPLOAD_TIME}" >> "$MONITOR_LOG"
+            echo "**Root CID**: \`${ROOT_CID}\`" >> "$MONITOR_LOG"
+            echo "**Monitoring Started**: ${TIMESTAMP}" >> "$MONITOR_LOG"
+            echo "" >> "$MONITOR_LOG"
+            echo "## Gateway Status Checks" >> "$MONITOR_LOG"
+            echo "" >> "$MONITOR_LOG"
+            echo "| Timestamp | ipfs.io Gateway | dweb.link Gateway |" >> "$MONITOR_LOG"
+            echo "|-----------|-----------------|-------------------|" >> "$MONITOR_LOG"
+          fi
+
+          # Append new test results
+          IPFS_IO_RESULT="${{ steps.test_gateways.outputs.IPFS_IO_RESULT }}"
+          DWEB_RESULT="${{ steps.test_gateways.outputs.DWEB_RESULT }}"
+          IPFS_IO_STATUS="${{ steps.test_gateways.outputs.IPFS_IO_STATUS }}"
+          DWEB_STATUS="${{ steps.test_gateways.outputs.DWEB_STATUS }}"
+
+          # Create status badges
+          if [ "$IPFS_IO_STATUS" = "200" ]; then
+            IPFS_BADGE="✅ Available"
+          else
+            IPFS_BADGE="❌ Unavailable (HTTP $IPFS_IO_STATUS)"
+          fi
+
+          if [ "$DWEB_STATUS" = "200" ]; then
+            DWEB_BADGE="✅ Available"
+          else
+            DWEB_BADGE="❌ Unavailable (HTTP $DWEB_STATUS)"
+          fi
+
+          echo "| $TIMESTAMP | $IPFS_BADGE<br>\`$IPFS_IO_RESULT\` | $DWEB_BADGE<br>\`$DWEB_RESULT\` |" >> "$MONITOR_LOG"
+
+          echo "MONITOR_LOG=$MONITOR_LOG" >> $GITHUB_ENV
+
+      - name: Commit monitoring results
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add logs/monitor-*.md
+          git commit -m "chore: gateway monitoring check at ${{ steps.test_gateways.outputs.TIMESTAMP }} [skip ci]" || echo "No changes to commit"
+          git push
+
+      - name: Create Summary
+        run: |
+          ROOT_CID="${{ steps.get_cid.outputs.ROOT_CID }}"
+          IPFS_IO_STATUS="${{ steps.test_gateways.outputs.IPFS_IO_STATUS }}"
+          DWEB_STATUS="${{ steps.test_gateways.outputs.DWEB_STATUS }}"
+
+          echo "# 🔍 Gateway Availability Check" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**CID**: \`${ROOT_CID}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Time**: ${{ steps.test_gateways.outputs.TIMESTAMP }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ "$IPFS_IO_STATUS" = "200" ]; then
+            echo "✅ **ipfs.io**: Available" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **ipfs.io**: Unavailable (HTTP $IPFS_IO_STATUS)" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ "$DWEB_STATUS" = "200" ]; then
+            echo "✅ **dweb.link**: Available" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **dweb.link**: Unavailable (HTTP $DWEB_STATUS)" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**ipfs.io**: \`${{ steps.test_gateways.outputs.IPFS_IO_RESULT }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**dweb.link**: \`${{ steps.test_gateways.outputs.DWEB_RESULT }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📝 **Monitoring log**: \`${{ env.MONITOR_LOG }}\`" >> $GITHUB_STEP_SUMMARY
