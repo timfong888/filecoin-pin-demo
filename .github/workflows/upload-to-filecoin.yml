@@ -23,7 +23,12 @@ jobs:
           node-version: '22'
 
       - name: Install filecoin-pin
-        run: npm install -g filecoin-pin
+        run: npm install -g filecoin-pin@latest
+
+      - name: Check filecoin-pin version
+        run: |
+          VERSION=$(filecoin-pin -V)
+          echo "filecoin-pin version: $VERSION"
 
       - name: Create logs directory
         run: mkdir -p logs
@@ -33,9 +38,11 @@ jobs:
           PRIVATE_KEY: ${{ secrets.FILECOIN_PRIVATE_KEY }}
           RPC_URL: ${{ secrets.FILECOIN_RPC_URL }}
         run: |
-          # Upload entire repo
-          OUTPUT=$(filecoin-pin add . 2>&1 | tee upload-output.txt)
-          
+          # Upload entire repo with auto-funding
+          # --auto-fund ensures 10-day payment runway before upload
+          # Automatically deposits additional USDFC if needed
+          OUTPUT=$(filecoin-pin add --auto-fund . 2>&1 | tee upload-output.txt)
+
           # Extract metadata
           ROOT_CID=$(echo "$OUTPUT" | grep 'Root CID:' | awk '{print $3}' || echo "N/A")
           PIECE_CID=$(echo "$OUTPUT" | grep 'Piece CID:' | awk '{print $3}' || echo "N/A")
@@ -45,6 +52,11 @@ jobs:
           PROVIDER=$(echo "$OUTPUT" | grep 'Name:' | awk '{print $2}' || echo "N/A")
           TX_HASH=$(echo "$OUTPUT" | grep 'Hash:' | awk '{print $2}' || echo "N/A")
           DOWNLOAD_URL=$(echo "$OUTPUT" | grep 'Direct Download URL:' | awk '{print $4}' || echo "N/A")
+
+          # Extract auto-funding information if present
+          AUTO_FUND_DEPOSIT=$(echo "$OUTPUT" | grep 'Deposited' | grep 'USDFC' | awk '{print $2}' || echo "")
+          AUTO_FUND_TOTAL=$(echo "$OUTPUT" | grep 'Total deposited:' | awk '{print $3}' || echo "")
+          AUTO_FUND_RUNWAY=$(echo "$OUTPUT" | grep 'Runway:' | sed 's/.*Runway: ~//' | sed 's/ .*//' || echo "")
           
           # Save to environment
           echo "ROOT_CID=$ROOT_CID" >> $GITHUB_ENV
@@ -52,6 +64,9 @@ jobs:
           echo "SIZE=$SIZE" >> $GITHUB_ENV
           echo "DATASET_ID=$DATASET_ID" >> $GITHUB_ENV
           echo "TX_HASH=$TX_HASH" >> $GITHUB_ENV
+          echo "AUTO_FUND_DEPOSIT=$AUTO_FUND_DEPOSIT" >> $GITHUB_ENV
+          echo "AUTO_FUND_TOTAL=$AUTO_FUND_TOTAL" >> $GITHUB_ENV
+          echo "AUTO_FUND_RUNWAY=$AUTO_FUND_RUNWAY" >> $GITHUB_ENV
           
           # Create log file (using filename-friendly timestamp)
           TIMESTAMP=$(date -u +"%Y-%m-%d-%H%M%S")
@@ -77,6 +92,23 @@ jobs:
           echo "| **Transaction Hash** | \`${TX_HASH}\` |" >> "$LOG_FILE"
           echo "| **Direct Download URL** | ${DOWNLOAD_URL} |" >> "$LOG_FILE"
           echo "" >> "$LOG_FILE"
+
+          # Add auto-funding information if present
+          if [ -n "$AUTO_FUND_DEPOSIT" ]; then
+            echo "## Auto-Funding Summary" >> "$LOG_FILE"
+            echo "" >> "$LOG_FILE"
+            echo "🔋 **Automatic payment adjustment made:**" >> "$LOG_FILE"
+            echo "" >> "$LOG_FILE"
+            echo "| Field | Value |" >> "$LOG_FILE"
+            echo "|-------|-------|" >> "$LOG_FILE"
+            echo "| **Deposited** | ${AUTO_FUND_DEPOSIT} USDFC |" >> "$LOG_FILE"
+            echo "| **Total Deposited** | ${AUTO_FUND_TOTAL} USDFC |" >> "$LOG_FILE"
+            echo "| **Runway** | ~${AUTO_FUND_RUNWAY} days |" >> "$LOG_FILE"
+            echo "" >> "$LOG_FILE"
+            echo "> ℹ️ The \`--auto-fund\` flag automatically ensured 10-day minimum payment runway before this upload." >> "$LOG_FILE"
+            echo "" >> "$LOG_FILE"
+          fi
+
           echo "## IPFS Gateway Links" >> "$LOG_FILE"
           echo "" >> "$LOG_FILE"
           echo "- **Browse repository**: https://ipfs.io/ipfs/${ROOT_CID}" >> "$LOG_FILE"
@@ -128,6 +160,20 @@ jobs:
           echo "- **Data Set**: #${{ env.DATASET_ID }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Transaction**: [\`${{ env.TX_HASH }}\`](https://calibration.filfox.info/tx/${{ env.TX_HASH }})" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Add auto-funding summary if deposit was made
+          if [ -n "${{ env.AUTO_FUND_DEPOSIT }}" ]; then
+            echo "## 🔋 Auto-Funding Summary" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Automatic payment adjustment was made:" >> $GITHUB_STEP_SUMMARY
+            echo "- **Deposited**: ${{ env.AUTO_FUND_DEPOSIT }} USDFC" >> $GITHUB_STEP_SUMMARY
+            echo "- **Total Deposited**: ${{ env.AUTO_FUND_TOTAL }} USDFC" >> $GITHUB_STEP_SUMMARY
+            echo "- **Runway**: ~${{ env.AUTO_FUND_RUNWAY }} days" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "> ℹ️ The \`--auto-fund\` flag automatically ensured 10-day minimum payment runway before upload." >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+          fi
+
           echo "📝 **Upload log saved**: \`${{ env.LOG_FILE }}\`" >> $GITHUB_STEP_SUMMARY
 
       - name: Upload artifacts
