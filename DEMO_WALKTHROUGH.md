@@ -1,7 +1,31 @@
 # Filecoin Pin CLI + GitHub Actions Walkthrough
-> Update: 10.13.2025 11:40 AM PDT
+> Update: 10.13.2025 2:45 PM PDT
 
 **How to use the Filecoin Pin CLI and creating GitHub Actions from the terminal**
+
+## Get Started Now
+
+---
+
+## Fast Start: Three Steps to Filecoin Storage
+
+### 1. Setup Payments
+
+Configure permissions for automatic payment handling:
+
+![Setup Payments](video/screenshots/fast-start-01-setup-payments.png)
+
+### 2. Upload Data
+
+Upload your file with automatic funding:
+
+![Upload Data](video/screenshots/fast-start-02-upload-data.png)
+
+### 3. Retrieve over Gateway
+
+Retrieve your data using the IPFS gateway:
+
+![Get Data](video/screenshots/fast-start-03-get-data.png)
 
 ---
 
@@ -18,7 +42,7 @@
 
 **What You'll Learn:** This walkthrough shows you how to:
 1. **Upload IPFS Files to Filecoin** - CLI commands
-2. **Pay with stablecoins (USDFC)** - Funds from a crypto wallet and paid from a Smart Contract
+2. **Pay with stablecoins (USDFC)** - Funds from a crypto wallet and paid from a Smart Contract to Storage Providers (SP)
 3. **Verify cryptographic proof** - Use an Explorer, CLI, or RPC call to verify your data is stored and with whom
 4. **Automate with GitHub Actions** - CI/CD pipelines that save to Filecoin automatically
 
@@ -26,29 +50,14 @@ By the end of this walkthrough, you'll have uploaded data to Filecoin, verified 
 
 ---
 
-### How This Walkthrough Works
+## How This Walkthrough Works
 
-```
-Your File → IPFS CID → CAR Archive → Filecoin Storage → Cryptographic Proofs
-   ↓           ↓            ↓              ↓                    ↓
-demo.txt   QmXxYy...   Packaged    Stored by SP    Verified on-chain
-```
+The CLI makes your uploaded files into IPFS CIDs that are then stored on a decentralized storage network.
 
-1. **You create a file** → `demo.txt`
-2. **IPFS generates a CID** → `QmXxYyZzAaBbCcDdEeFfGg...` (content hash)
-3. **Packaged into CAR format** → Content Addressable aRchive for Filecoin
-4. **Stored by Filecoin provider** → Decentralized storage infrastructure
-5. **Cryptographic proofs submitted** → On-chain verification your data exists
-6. **Retrievable via CID** → From any IPFS gateway 
-
-
-## Overview
-
-This walkthrough demonstrates:
-- Using **filecoin-pin CLI** commands directly (no daemon/server required)
-- Creating **GitHub Actions** workflows from the command line
-- Testing and monitoring workflows with **GitHub CLI (`gh`)**
-- Manually checking payment flows and wallet state
+**Three key steps:**
+1. **Setup Payments** - Configure payment permissions for storage
+2. **Store** - Upload files to Filecoin with cryptographic proofs
+3. **Verify** - Check your data is stored and retrieve it via IPFS gateways
 
 ---
 
@@ -63,6 +72,9 @@ nvm use 22
 
 # Install filecoin-pin globally
 npm install -g filecoin-pin
+
+# Install ipfs-car (for CAR file operations)
+npm install -g @ipld/car-cli
 
 # Install GitHub CLI
 brew install gh  # macOS
@@ -101,54 +113,43 @@ cast --version
 
 Generate a new Ethereum-compatible private key for Filecoin Calibration testnet:
 
-**Option 1: Using Node.js (built-in)**
-```bash
-node -e "const crypto = require('crypto'); const pk = '0x' + crypto.randomBytes(32).toString('hex'); console.log('Private Key:', pk);"
-```
-
-
-
-**Option 2: Using cast (if you have Foundry)**
+**Using cast (Foundry):**
 ```bash
 cast wallet new
 ```
 
 **Expected Output:**
 ```
-Private Key: 0x1ef038a399d0bc1b7a1620f42591b2a13a9b5ec5c4a6ac496382b7e60c6a7cc5
+Successfully created new keypair.
+Address:     0x5a0c7D45C3834E4eB18c26C60932B757A43B7B0B
+Private key: 0x8eef...c414
 ```
 
-> **IMPORTANT**: Save this private key securely! This is for TESTNET only.
+> **IMPORTANT**: Save this private key securely! This is for TESTNET only. Never commit private keys to repositories.
 
 **Store in environment variable:**
 ```bash
-export PRIVATE_KEY="0x1ef038a399d0bc1b7a1620f42591b2a13a9b5ec5c4a6ac496382b7e60c6a7cc5"
+export PRIVATE_KEY="0x8eef...c414"  # Use your full private key
 export RPC_URL="https://api.calibration.node.glif.io/rpc/v1"
+export WALLET_ADDRESS="0x5a0c7D45C3834E4eB18c26C60932B757A43B7B0B"
 ```
 
 ---
 
-### Step 0.2: Get Your Wallet Address
+### Step 0.2: Check Initial Balance
 
-Derive your wallet address from the private key:
+Verify your new wallet balance (should be 0 before using faucet):
 
-**Using cast:**
 ```bash
-cast wallet address --private-key $PRIVATE_KEY
+cast balance $WALLET_ADDRESS --rpc-url $RPC_URL
 ```
 
 **Expected Output:**
 ```
-0xD8106706EF440B48ACfc1F0cB542E8f5Dc5F058e
+0
 ```
 
-![Wallet Address](screenshots/02-wallet-address.png)
-
-**Store the address:**
-```bash
-export WALLET_ADDRESS="0xD8106706EF440B48ACfc1F0cB542E8f5Dc5F058e"
-echo "Your wallet address: $WALLET_ADDRESS"
-```
+Your wallet has 0 tFIL. You'll need to fund it using a faucet in the next step.
 
 ---
 
@@ -160,7 +161,7 @@ Get testnet FIL from one of the available Calibration faucets. This is a brief b
 
 #### Available Calibration Faucets
 
-> **Minimum Required**: You need **~80-100 tFIL** total to mint the minimum 100 USDFC in Step 0.4. Faucets provide different amounts.
+> **Minimum Required**: You need **~80-100 tFIL** total to mint the minimum 200 USDFC in Step 0.4. Faucets provide different amounts.
 
 **Recommended: ChainSafe Faucet (100 tFIL)**
 ```bash
@@ -169,126 +170,33 @@ open "https://faucet.calibnet.chainsafe-fil.io/funds.html"
 
 - Amount: **100 tFIL** per request
 - Steps: Enter address → Click "Send"
-- Returns: Filecoin message CID (e.g., `bafy2bzace...`)
 - Confirmation time: 30-60 seconds
 
-**Alternative: Beryx/Zondax Faucet (10 tFIL)**
-```bash
-open "https://beryx.zondax.ch/faucet"
-```
-
-- Amount: **10 tFIL** per request
-- Steps: Select "Calibration" → Enter address → Click "Send"
-- Only use for: Small top-ups (would need 8-10 requests for minimum)
-
-**Alternative: Glif Faucet (5 tFIL)**
-```bash
-open "https://faucet.glif.io/?network=calibration"
-```
-
-- Amount: **5 tFIL** per request
-- Only use for: Small top-ups if ChainSafe is rate-limited
-
-> **Tip**: Use ChainSafe faucet first. It provides 200 tFIL in one request.
-
-**Confirm Transaction:**
-
-After submitting, you'll receive a Filecoin message CID. Verify it on the explorer:
-
-```bash
-# Example: View your transaction (replace with your CID)
-open "https://calibration.filfox.info/en/message/bafy2bzace...?t=4"
-```
-
-Wait for the transaction to show as confirmed (30-60 seconds).
-
->> In this demo, I deposited 200 tFIL - I used the faucet twice. So the numbers will not match yours. 100 tFIL should be enough to borrow 200 USDFC, which is the minimum.
-
 #### Verify Funds Arrived
+[Don't add othe rmethods, let's keep it simple and use CLI where possible]
 
-**Option 1: Using cast (requires Foundry):**
-```bash
-cast balance $WALLET_ADDRESS --rpc-url $RPC_URL
-```
-
-**Expected Output:**
-```
-200000000000000000000
-```
-
-**Convert to FIL for readability:**
-```bash
-cast --to-unit ether $(cast balance $WALLET_ADDRESS --rpc-url $RPC_URL)
-```
-
-**Expected Output:**
-```
-200.000000000000000000
-```
-
-**Option 2: Using curl:**
-```bash
-curl -s -X POST https://api.calibration.node.glif.io/rpc/v1 \
-  -H "Content-Type: application/json" \
-  -d '{"jsonrpc":"2.0","method":"eth_getBalance","params":["0xD8106706EF440B48ACfc1F0cB542E8f5Dc5F058e","latest"],"id":1}'
-```
-
-**Expected Output:**
-```json
-{
-  "id": 1,
-  "jsonrpc": "2.0",
-  "result": "0x56bc75e2d63100000"
-}
-```
-
-**Convert hex to FIL:**
-```bash
-node -e "const bal = BigInt('0x56bc75e2d63100000'); console.log('Balance:', Number(bal) / 1e18, 'FIL');"
-```
-
-**Expected Output:**
-```
-Balance: 200 FIL
-```
-
-**Option 3 (Recommended): Using filecoin-pin CLI (checks both FIL and USDFC):**
 ```bash
 filecoin-pin payments status --private-key $PRIVATE_KEY --rpc-url $RPC_URL
 ```
 
-**Expected Output (after ChainSafe faucet 2x - 200 tFIL):**
+**Expected Output (after ChainSafe faucet - 100 tFIL):**
 ```
 Filecoin Onchain Cloud Payment Status
 
 ━━━ Current Status ━━━
 
-Address: 0xD8106706EF440B48ACfc1F0cB542E8f5Dc5F058e
+Address: 0x5a0c7D45C3834E4eB18c26C60932B757A43B7B0B
 Network: calibration
 
 Balances:
-  FIL: 200.00 tFIL (or more if you used multiple faucets)
+  FIL: 100.00 tFIL
   USDFC wallet: 0.00 USDFC
   USDFC deposited: 0.00 USDFC
 
 No USDFC tokens found
 ```
 
-> Option 3 (`filecoin-pin payments status`) will check complete payment setup throughout this walkthrough
-
-**Example Transaction:**
-
-Your ChainSafe faucet request returned:
-```
-bafy2bzacecurhcszpsaykcduni4wxrx2tkjb5nx7ji6hklwdjivtm64fcvbng
-```
-
-View on explorer (use your own transaction ID)
-```bash
-open "https://calibration.filfox.info/en/message/bafy2bzacecurhcszpsaykcduni4wxrx2tkjb5nx7ji6hklwdjivtm64fcvbng?t=4"
-```
-
-**You now have 200+ tFIL!** Ready for USDFC minting.
+**You now have 100 tFIL!** Ready for USDFC minting.
 
 ---
 
@@ -302,7 +210,7 @@ USDFC is required for Filecoin storage payments. You need to mint it using FIL a
 1. Open MetaMask browser extension
 2. Click account icon → "Import Account"
 3. Select "Private Key" method
-4. Paste: `0x1ef038a399d0bc1b7a1620f42591b2a13a9b5ec5c4a6ac496382b7e60c6a7cc5`
+4. Paste: `0x8eef...c414`
 
 ![alt text](<screenshots/add private key to metamask.jpg>)
 
@@ -326,7 +234,7 @@ open "https://stg.usdfc.net"
 
 1. Connect MetaMask wallet
 2. Click "Open Trove"
-3. Enter collateral: `150 FIL`
+3. Enter collateral: `90 FIL` (leaves ~10 FIL for gas fees)
 4. Enter borrow amount: `200 USDFC` (minimum)
 5. Review collateral ratio (should be >150%)
 6. Confirm transaction in MetaMask
@@ -348,11 +256,11 @@ Filecoin Onchain Cloud Payment Status
 ✓ Configuration loaded
 
 ━━━ Current Status ━━━
-Address: 0xD8106706EF440B48ACfc1F0cB542E8f5Dc5F058e
+Address: 0x5a0c7D45C3834E4eB18c26C60932B757A43B7B0B
 Network: calibration
 
 Wallet
-  54.999898883561339543 tFIL
+  9.999898883561339543 tFIL
   200.0000 USDFC
 
 Storage Deposit
@@ -365,10 +273,10 @@ Status check complete
 ```
 
 **What happened:**
-- Locked ~150 FIL as collateral
+- Locked ~90 FIL as collateral
 - Minted 200 USDFC
-- Remaining: ~50 tFIL for gas fees
-- Next: Deposit USDFC for storage
+- Remaining: ~10 tFIL for gas fees
+- Next: Setup payments for storage
 
 ---
 
@@ -380,8 +288,8 @@ Save your credentials **locally** for easy reuse:
 
 ```bash
 cat > ~/.filecoin-pin-env << 'EOF'
-export PRIVATE_KEY="0x1ef038a399d0bc1b7a1620f42591b2a13a9b5ec5c4a6ac496382b7e60c6a7cc5"
-export WALLET_ADDRESS="0xD8106706EF440B48ACfc1F0cB542E8f5Dc5F058e"
+export PRIVATE_KEY="0x8eef...c414"
+export WALLET_ADDRESS="0x5a0c7D45C3834E4eB18c26C60932B757A43B7B0B"
 export RPC_URL="https://api.calibration.node.glif.io/rpc/v1"
 EOF
 
@@ -425,11 +333,11 @@ Filecoin Onchain Cloud Payment Status
 ✓ Configuration loaded
 
 ━━━ Current Status ━━━
-Address: 0xD8106706EF440B48ACfc1F0cB542E8f5Dc5F058e
+Address: 0x5a0c7D45C3834E4eB18c26C60932B757A43B7B0B
 Network: calibration
 
 Wallet
-  54.999898883561339543 tFIL
+  9.999898883561339543 tFIL
   200.0000 USDFC
 
 Storage Deposit
@@ -442,8 +350,8 @@ Status check complete
 ```
 
 **What this shows:**
-- **Address**: Your wallet address (0xD8106706EF440B48ACfc1F0cB542E8f5Dc5F058e)
-- **FIL balance**: ~55 tFIL remaining (after collateral for USDFC)
+- **Address**: Your wallet address (0x5a0c7D45C3834E4eB18c26C60932B757A43B7B0B)
+- **FIL balance**: ~10 tFIL remaining (after collateral for USDFC)
 - **USDFC wallet**: 200 USDFC available
 - **Storage Deposit**: 0 USDFC deposited (needs setup)
 - **Payment Rails**: None configured yet
@@ -453,17 +361,17 @@ Status check complete
 
 ### Command 2: Setup Payments (First Time Only)
 
-Configure payment approvals and deposit USDFC for storage:
+Configure payment approvals (permissions only - deposits handled automatically with `--auto-fund`):
 
 ```bash
-filecoin-pin payments setup --auto --deposit 50
+filecoin-pin payments setup --auto
 ```
 
-> **What `--auto` does**: Automatically handles both permission setup AND deposit in one command. Without `--auto`, you'd need to manually confirm each step. Perfect for first-time setup and CI/CD pipelines.
+> **What `--auto` does**: Configures WarmStorage contract permissions automatically. No deposit required at this step - use `--auto-fund` when uploading to handle deposits automatically.
 
-> ⏱️ **Expected Duration**: 2-5 minutes (waiting for blockchain confirmation)
+> ⏱️ **Expected Duration**: 1-2 minutes (one blockchain confirmation)
 
-**Expected Output (initial):**
+**Expected Output:**
 ```
 Filecoin Onchain Cloud Payment Setup
 
@@ -474,58 +382,37 @@ Running in auto mode...
 ✓ Balance check complete
 
 Account:
-  Wallet: 0xD8106706EF440B48ACfc1F0cB542E8f5Dc5F058e
+  Wallet: 0x5a0c7D45C3834E4eB18c26C60932B757A43B7B0B
   Network: calibration
 Balances:
-  FIL: 54.9999 tFIL
+  FIL: 9.9999 tFIL
   USDFC wallet: 200.0000 USDFC
   USDFC deposited: 0.0000 USDFC
+
 ✓ WarmStorage permissions configured
 
 Transaction:
   0xf61d885b2316589efdcc6637e8b17c06c1439fefd626ba121a08023c0ebaf2a1
 
-[Waiting for transaction confirmation...]
-```
-
-> **What's happening**: The command submits a transaction to the blockchain and waits for it to be mined. Calibration testnet block times vary, so this typically takes **2-5 minutes**. The command will wait until confirmation before proceeding.
-
-**Expected Output (after confirmation):**
-```
-Deposit successful (50.0000 USDFC)
-
-━━━ Configuration Summary ━━━
+━━━ Setup Complete ━━━
 
 Network: calibration
-Deposit: 50.0000 USDFC
-Storage: ~27.3 TiB for 1 month
-Status: Ready to upload
+Status: Ready to upload with --auto-fund
 ```
 
 **What happens:**
 1. Connects to Calibration network
 2. Checks wallet balances
 3. Configures WarmStorage contract permissions
-4. Submits deposit transaction to blockchain
-5. **Waits for transaction confirmation (2-5 minutes)**
-6. Confirms deposit successful
+4. Completes setup - ready for uploads
 
-**Verify transactions on blockchain:**
+**Verify transaction on blockchain:**
 
-The command creates two transactions. You can verify each one:
-
-**Option 1: View in browser (Explorer)**
 ```bash
-# Permission setup transaction
+# View in browser
 open "https://calibration.filfox.info/tx/0xf61d885b2316589efdcc6637e8b17c06c1439fefd626ba121a08023c0ebaf2a1"
 
-# Deposit transaction
-open "https://calibration.filfox.info/tx/0xd1346ed5432df9537498df196ff081a4021af8406afdb4b6c6cff8ffea0df208"
-```
-
-**Option 2: Verify from CLI (using cast)**
-```bash
-# Check permission setup transaction
+# Or verify from CLI
 cast receipt 0xf61d885b2316589efdcc6637e8b17c06c1439fefd626ba121a08023c0ebaf2a1 --rpc-url $RPC_URL
 ```
 
@@ -533,60 +420,15 @@ cast receipt 0xf61d885b2316589efdcc6637e8b17c06c1439fefd626ba121a08023c0ebaf2a1 
 ```
 blockHash            0x45c6f5eb9fc51cdaf9cbf3f9f0f26386bbee937a55349627637efba196001245
 blockNumber          3090160
-contractAddress
-cumulativeGasUsed    0
-effectiveGasPrice    136631
-from                 0xD8106706EF440B48ACfc1F0cB542E8f5Dc5F058e
+status               1 (success)
+from                 0x5a0c7D45C3834E4eB18c26C60932B757A43B7B0B
 gasUsed              31510988
-status               1 (success)
-transactionHash      0xf61d885b2316589efdcc6637e8b17c06c1439fefd626ba121a08023c0ebaf2a1
-transactionIndex     18
-type                 2
 to                   0x1096025c9D6B29E12E2f04965F6E64d564Ce0750
 ```
 
 **What to check:**
-- ✅ **status**: `1 (success)` means transaction succeeded
-- ✅ **from**: Your wallet address (0xD8106706EF440B48ACfc1F0cB542E8f5Dc5F058e)
-- ✅ **gasUsed**: Amount of gas consumed (31510988)
-- ✅ **blockNumber**: Transaction is confirmed on-chain (block 3090160)
+- ✅ **status**: `1 (success)` means permissions configured successfully
 - ✅ **to**: WarmStorage contract (0x1096025c9D6B29E12E2f04965F6E64d564Ce0750)
-
-```bash
-# Check deposit transaction
-cast receipt 0xd1346ed5432df9537498df196ff081a4021af8406afdb4b6c6cff8ffea0df208 --rpc-url $RPC_URL
-```
-
-![Verify Transaction](screenshots/07-verify-transaction.png)
-
-**Expected Output:**
-```
-blockHash            0x5ee531cdfa242747a6363bb038c789440a5f2eaf957d55198b00f50f050a83ae
-blockNumber          3090172
-contractAddress
-cumulativeGasUsed    0
-effectiveGasPrice    247272
-from                 0xD8106706EF440B48ACfc1F0cB542E8f5Dc5F058e
-gasUsed              103631401
-status               1 (success)
-transactionHash      0xd1346ed5432df9537498df196ff081a4021af8406afdb4b6c6cff8ffea0df208
-transactionIndex     2
-type                 2
-to                   0x1096025c9D6B29E12E2f04965F6E64d564Ce0750
-```
-
-**What to check:**
-- ✅ **status**: `1 (success)` means transaction succeeded
-- ✅ **blockNumber**: Confirmed 12 blocks after permissions (3090172)
-- ✅ **gasUsed**: Deposit uses more gas than permissions (103631401)
-
-> 💡 **Note**: The `cast receipt` command shows the transaction succeeded but doesn't display the deposit amount (50 USDFC) in a human-readable format. To verify the actual deposit, use `filecoin-pin payments status` (shown below).
-
-> 📝 **Note**: The setup command **automatically performs two transactions in sequence**:
-> 1. Configure WarmStorage permissions (~1-2 minutes)
-> 2. Deposit USDFC (~1-2 minutes)
->
-> You only need to run the command **once** - it handles both transactions automatically. The total wait time is typically 3-5 minutes for both transactions to confirm.
 
 **Verify setup completed:**
 ```bash
@@ -600,23 +442,23 @@ Filecoin Onchain Cloud Payment Status
 ✓ Configuration loaded
 
 ━━━ Current Status ━━━
-Address: 0xD8106706EF440B48ACfc1F0cB542E8f5Dc5F058e
+Address: 0x5a0c7D45C3834E4eB18c26C60932B757A43B7B0B
 Network: calibration
 
 Wallet
-  54.9999 tFIL
-  150.0000 USDFC
+  9.9999 tFIL
+  200.0000 USDFC
 
 Storage Deposit
-  50.0000 USDFC deposited
+  0.0000 USDFC deposited
 Payment Rails
-  Active payment rails configured
+  No active payment rails
 WarmStorage Usage
   Ready to upload
 Status check complete
 ```
 
-✅ **You're now ready to upload files to Filecoin!**
+✅ **You're now ready to upload files! Use `--auto-fund` with your first upload to automatically deposit the right amount.**
 
 ---
 
@@ -671,18 +513,18 @@ Auto-funding completed:
 ```
 
 **When to use `--auto-fund`:**
-- ✅ CI/CD pipelines - Ensures consistent 10-day runway automatically
-- ✅ Automated workflows - "Set it and forget it" funding management
-- ✅ After initial setup - Maintains minimum runway without manual tracking
-- ✅ Multiple small uploads - Each upload checks and tops up if needed
+- CI/CD pipelines - Ensures consistent 10-day runway automatically
+- Automated workflows - "Set it and forget it" funding management
+- After initial setup - Maintains minimum runway without manual tracking
+- Multiple small uploads - Each upload checks and tops up if needed
 
 **When NOT to use `--auto-fund`:**
-- ❌ You want > 10 days runway (use `payments fund --days N` instead)
-- ❌ You want manual control over deposits
-- ❌ You're uploading many tiny files rapidly (overhead of checking each time)
-- ❌ You want to optimize for gas costs (batch deposits manually)
+- You want > 10 days runway (use `payments fund --days N` instead)
+- You want manual control over deposits
+- You're uploading many tiny files rapidly (overhead of checking each time)
+- You want to optimize for gas costs (batch deposits manually)
 
-> ⚠️ **Important**: `--auto-fund` is a flag for `add` and `import` commands, NOT for `payments setup`.
+> **Important**: `--auto-fund` is a flag for `add` and `import` commands, NOT for `payments setup`.
 
 **Comparison with manual funding:**
 
@@ -891,96 +733,7 @@ Add completed successfully
 - **Transaction**: `0xc85e49d2ed745cc8c5d7115e7c45a1243ec25da7e73e224a744887783afea42b` - Blockchain confirmation hash
 - **Direct Download URL**: Direct link to retrieve your data from the storage provider
 
-**Verify the upload by downloading and validating the CAR file:**
-
-```bash
-# Download the CAR file from storage provider
-curl -s -o demo-downloaded.txt https://calib.ezpdpz.net/piece/bafkzcibcfab4grpgq6e6rva4kfuxfcvibdzx3kn2jdw6q3zqgwt5cou7j6k4wfq
-
-# Check file was downloaded
-ls -lh demo-downloaded.txt
-
-# Verify it's a CAR file (check for CAR header markers)
-strings demo-downloaded.txt | grep -E "eroots|version"
-
-# Verify content is present
-grep -a "Hello Filecoin from CLI!" demo-downloaded.txt
-```
-
-**Expected Output:**
-```
--rw-r--r--  1 user  staff   214B Oct  9 14:45 demo-downloaded.txt
-
-eroots
-gversion
-
-Hello Filecoin from CLI!
-```
-
-
-**What we verified:**
-- ✅ File downloaded successfully (214 bytes)
-- ✅ Valid CAR file format (contains `eroots` and `version` header markers)
-- ✅ Original content is preserved in the CAR file
-
-**Extract and verify the original file from the CAR:**
-
-First, install `ipfs-car` tool (one-time setup):
-```bash
-npm install -g ipfs-car
-```
-
-Download, verify, and unpack:
-```bash
-# Download the CAR file
-curl -s -o demo-downloaded.car https://calib.ezpdpz.net/piece/bafkzcibcfab4grpgq6e6rva4kfuxfcvibdzx3kn2jdw6q3zqgwt5cou7j6k4wfq
-
-# Verify it's a CAR file
-strings demo-downloaded.car | grep -E "eroots|version"
-
-# List contents of CAR file
-ipfs-car ls demo-downloaded.car
-
-# Unpack the CAR file
-ipfs-car unpack demo-downloaded.car --output demo-restored
-
-# Check extracted file
-ls -lh demo-restored/
-
-# View content
-cat demo-restored/demo.txt
-
-# Compare with original
-diff demo.txt demo-restored/demo.txt && echo "✓ Files are identical!"
-```
-
-**Expected Output:**
-```
-eroots
-gversion
-
-.
-./demo.txt
-
-total 8
--rw-r--r--  1 user  staff   25B Oct  9 17:24 demo.txt
-
-Hello Filecoin from CLI!
-
-✓ Files are identical!
-```
-
-![Extract CAR File](screenshots/10-extract-car.png)
-
-**What we verified:**
-- ✅ Valid CAR file format (contains `eroots` and `version` markers)
-- ✅ File structure preserved (`./demo.txt`)
-- ✅ Content extracted successfully
-- ✅ Content matches original file exactly
-
-> 💡 **Note**: The `ipfs-car` tool is a simple, maintained package that can pack and unpack CAR files without custom scripts. It works for both files and directories.
-
-✅ **Your file is now permanently stored on Filecoin with ongoing proof of possession, and you can retrieve and verify it anytime!**
+✅ **Your file is now permanently stored on Filecoin with ongoing proof of possession!**
 
 ---
 
@@ -1053,86 +806,9 @@ Add completed successfully
 
 > 💡 **Note**: Multiple uploads to the same payment configuration are grouped into the same Data Set, with each upload assigned a unique Piece ID.
 
-**Verify the directory upload by downloading and unpacking:**
-
-First, install `ipfs-car` tool (one-time setup):
-```bash
-npm install -g ipfs-car
-```
-
-Download, verify, and unpack:
-```bash
-# Download the CAR file
-curl -s -o my-data-downloaded.car https://calib.ezpdpz.net/piece/bafkzcibcjmcnyio2ocxhmtq34uh5ct425xzpnor532zku7tjvqf5toodbxtsqhi
-
-# Verify it's a CAR file
-strings my-data-downloaded.car | grep -E "eroots|version"
-
-# List contents of CAR file
-ipfs-car ls my-data-downloaded.car
-
-# Unpack the CAR file
-ipfs-car unpack my-data-downloaded.car --output my-data-restored
-
-# Verify extracted files
-ls -lh my-data-restored/
-
-# Compare with original
-diff -r my-data/ my-data-restored/ && echo "✓ Directories are identical!"
-```
-
-**Expected Output:**
-```
-eroots
-ogversion
-
-.
-./file1.txt
-./file2.txt
-./file3.txt
-
-total 24
--rw-r--r--  1 user  staff   7B Oct  9 17:22 file1.txt
--rw-r--r--  1 user  staff   7B Oct  9 17:22 file2.txt
--rw-r--r--  1 user  staff   7B Oct  9 17:22 file3.txt
-
-Directories are identical!
-```
-
-
-**What we verified:**
-- ✅ Valid CAR file format (contains `eroots` and `version` markers)
-- ✅ Directory structure preserved (3 files in correct hierarchy)
-- ✅ All files extracted successfully
-- ✅ Content matches original directory exactly
-
-> 💡 **Note**: The `ipfs-car` tool is a simple, maintained package that can pack and unpack CAR files without custom scripts. It works for both files and directories.
-
 ---
 
-### Command 5: Import Existing CAR File
-
-Upload a pre-created CAR file:
-
-```bash
-filecoin-pin import existing-archive.car
-```
-
-**Expected Output:**
-```
-✓ Reading CAR file...
-✓ Uploading to Filecoin...
-✓ Upload complete
-
-CommP: bafk2bzaced...
-Root ID: 44
-Size: 2.5 MB
-Transaction: 0x...
-```
-
----
-
-### Command 6: List All Data Sets
+### Command 5: List All Data Sets
 
 View all data sets you've created:
 
@@ -1149,7 +825,7 @@ Filecoin Onchain Cloud Data Sets
 
 ━━━ Data Sets ━━━
 
-Address: 0xD8106706EF440B48ACfc1F0cB542E8f5Dc5F058e
+Address: 0x5a0c7D45C3834E4eB18c26C60932B757A43B7B0B
 Network: calibration
 
 #325 • live • managed
@@ -1161,7 +837,7 @@ Network: calibration
   PDP rail ID: 631
   CDN rail ID: none
   Cache-miss rail ID: none
-  Payer: 0xD8106706EF440B48ACfc1F0cB542E8f5Dc5F058e
+  Payer: 0x5a0c7D45C3834E4eB18c26C60932B757A43B7B0B
   Payee: 0xa3971A7234a3379A1813d9867B531e7EeB20ae07
 
   Metadata
@@ -1187,7 +863,7 @@ Data set inspection complete
 
 ---
 
-### Command 7: Inspect Specific Data Set
+### Command 6: Inspect Specific Data Set
 
 Get detailed information about a specific data set (this queries the blockchain directly):
 
@@ -1211,7 +887,7 @@ Data Set #325 • live
   PDP rail ID: 631
   CDN rail ID: none
   Cache-miss rail ID: none
-  Payer: 0xD8106706EF440B48ACfc1F0cB542E8f5Dc5F058e
+  Payer: 0x5a0c7D45C3834E4eB18c26C60932B757A43B7B0B
   Payee: 0xa3971A7234a3379A1813d9867B531e7EeB20ae07
   Service provider: 0xa3971A7234a3379A1813d9867B531e7EeB20ae07
   Provider: ezpdpz-calib (ID 3)
@@ -1292,11 +968,11 @@ Filecoin Onchain Cloud Payment Status
 ✓ Configuration loaded
 
 ━━━ Current Status ━━━
-Address: 0xD8106706EF440B48ACfc1F0cB542E8f5Dc5F058e
+Address: 0x5a0c7D45C3834E4eB18c26C60932B757A43B7B0B
 Network: calibration
 
 Wallet
-  54.999859112291218814 tFIL
+  9.999859112291218814 tFIL
   150.0000 USDFC
 
 Storage Deposit
@@ -1319,7 +995,7 @@ Status check complete
 
 ```bash
 # Query balance in wei (smallest unit)
-cast balance 0xD8106706EF440B48ACfc1F0cB542E8f5Dc5F058e \
+cast balance 0x5a0c7D45C3834E4eB18c26C60932B757A43B7B0B \
   --rpc-url https://api.calibration.node.glif.io/rpc/v1
 ```
 
@@ -1335,14 +1011,14 @@ cast --to-unit 54999859112291218814 ether
 
 **Expected Output:**
 ```
-54.999859112291218814
+9.999859112291218814
 ```
 
 ![Compare Balance Methods](screenshots/15-compare-balances.png)
 
 **Comparison result:**
-- ✅ `filecoin-pin payments status`: **54.999859112291218814 tFIL**
-- ✅ `cast balance`: **54.999859112291218814 FIL**
+- ✅ `filecoin-pin payments status`: **9.999859112291218814 tFIL**
+- ✅ `cast balance`: **9.999859112291218814 FIL**
 - ✅ **Both return identical values** - confirming `filecoin-pin` queries live blockchain state
 
 > 💡 **Note**: This proves that `filecoin-pin payments status` queries the blockchain directly via RPC, not from a cached database. The balances are identical down to the smallest unit (wei).
@@ -1355,7 +1031,7 @@ View your recent transactions in the blockchain explorer:
 
 ```bash
 # Open explorer for your wallet address
-open "https://calibration.filfox.info/address/0xD8106706EF440B48ACfc1F0cB542E8f5Dc5F058e"
+open "https://calibration.filfox.info/address/0x5a0c7D45C3834E4eB18c26C60932B757A43B7B0B"
 ```
 
 This will show all transactions, including:
@@ -1382,7 +1058,7 @@ blockNumber          3090172
 contractAddress
 cumulativeGasUsed    0
 effectiveGasPrice    247272
-from                 0xD8106706EF440B48ACfc1F0cB542E8f5Dc5F058e
+from                 0x5a0c7D45C3834E4eB18c26C60932B757A43B7B0B
 gasUsed              103631401
 status               1 (success)
 transactionHash      0xd1346ed5432df9537498df196ff081a4021af8406afdb4b6c6cff8ffea0df208
@@ -1770,18 +1446,15 @@ gh run view $RUN_ID --web
 ```bash
 # Payment Management
 filecoin-pin payments status              # Check status
-filecoin-pin payments setup --auto --deposit 50 # Setup (first time)
+filecoin-pin payments setup --auto        # Setup permissions (first time)
 filecoin-pin payments fund --days 30      # Adjust to exact 30-day runway
 filecoin-pin payments fund --amount 100   # Set exact 100 USDFC deposit
-filecoin-pin payments deposit --amount 50 # Add funds (legacy, prefer fund)
 
 # Upload to Filecoin
 filecoin-pin add <file>                   # Upload file
 filecoin-pin add --auto-fund <file>       # Upload with auto-funding (v0.7.0+)
 filecoin-pin add <directory>              # Upload directory
 filecoin-pin add --bare <file>            # Upload without wrapper
-filecoin-pin import <car-file>            # Import CAR
-filecoin-pin import --auto-fund <car>     # Import with auto-funding (v0.7.0+)
 
 # Data Set Management
 filecoin-pin data-set --ls                # List all
