@@ -1,5 +1,5 @@
 # Filecoin Pin CLI + GitHub Actions Walkthrough
-> Update: 10.11.2025 7:40 AM PDT
+> Update: 10.13.2025 11:40 AM PDT
 
 **How to use the Filecoin Pin CLI and creating GitHub Actions from the terminal**
 
