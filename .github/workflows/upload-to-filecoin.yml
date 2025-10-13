@@ -23,7 +23,7 @@ jobs:
           node-version: '22'
 
       - name: Install filecoin-pin
-        run: npm install -g filecoin-pin@latest
+        run: npm install -g filecoin-pin@0.7.3
 
       - name: Check filecoin-pin version
         run: |
