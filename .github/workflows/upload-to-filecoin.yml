@@ -41,7 +41,8 @@ jobs:
           # Upload entire repo with auto-funding
           # --auto-fund ensures 10-day payment runway before upload
           # Automatically deposits additional USDFC if needed
-          OUTPUT=$(filecoin-pin add --auto-fund . 2>&1 | tee upload-output.txt)
+          # Strip ANSI color codes for clean log output
+          OUTPUT=$(filecoin-pin add --auto-fund . 2>&1 | sed 's/\x1b\[[0-9;]*m//g' | tee upload-output.txt)
 
           # Extract metadata
           ROOT_CID=$(echo "$OUTPUT" | grep 'Root CID:' | awk '{print $3}' || echo "N/A")
