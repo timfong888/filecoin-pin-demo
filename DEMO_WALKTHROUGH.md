@@ -60,7 +60,7 @@ brew install gh  # macOS
 # or
 sudo apt install gh  # Ubuntu/Debian
 
-# Install Foundry (for cast commands - wallet operations, balance checks, etc.)
+# Install Foundry (for wallet operations)
 curl -L https://foundry.paradigm.xyz | bash
 # Then run this in a new terminal:
 foundryup
@@ -670,8 +670,6 @@ Pieces
 Data set inspection complete
 ```
 
-![Inspect Data Set](screenshots/14-inspect-dataset.png)
-
 **Key information explained:**
 
 **Data Set Status:**
@@ -703,9 +701,7 @@ Data set inspection complete
 
 This section demonstrates that `filecoin-pin` queries live blockchain data, not cached information.
 
-### Check Wallet Balance - Comparison of Methods
-
-**Method 1: Using filecoin-pin (user-friendly)**
+### Check Wallet Balance
 
 ```bash
 filecoin-pin payments status
@@ -741,92 +737,8 @@ WarmStorage Usage
 Status check complete
 ```
 
-**Method 2: Using cast (raw blockchain query)**
-
-```bash
-# Query balance in wei (smallest unit)
-cast balance 0x5a0c7D45C3834E4eB18c26C60932B757A43B7B0B \
-  --rpc-url https://api.calibration.node.glif.io/rpc/v1
-```
-
-**Expected Output:**
-```
-54999859112291218814
-```
-
-**Convert to FIL:**
-```bash
-cast --to-unit 54999859112291218814 ether
-```
-
-**Expected Output:**
-```
-1.999933983437119844
-```
-
-![Compare Balance Methods](screenshots/15-compare-balances.png)
-
-**Comparison result:**
-- ✅ `filecoin-pin payments status`: **1.999933983437119844 tFIL**
-- ✅ `cast balance`: **1.999933983437119844 FIL**
-- ✅ **Both return identical values** - confirming `filecoin-pin` queries live blockchain state
-
-> 💡 **Note**: This proves that `filecoin-pin payments status` queries the blockchain directly via RPC, not from a cached database. The balances are identical down to the smallest unit (wei).
-
 ---
 
-### Check Recent Transactions
-
-View your recent transactions in the blockchain explorer:
-
-```bash
-# Open explorer for your wallet address
-open "https://calibration.filfox.info/address/0x5a0c7D45C3834E4eB18c26C60932B757A43B7B0B"
-```
-
-This will show all transactions, including:
-- USDFC deposits from Command 2
-- File uploads from Commands 3 & 4
-- Any other blockchain interactions
-
----
-
-### Verify Specific Transaction
-
-Check if a specific transaction was successful using one of our deposit transactions:
-
-```bash
-# Verify the USDFC deposit transaction from Command 2
-cast receipt 0xd1346ed5432df9537498df196ff081a4021af8406afdb4b6c6cff8ffea0df208 \
-  --rpc-url https://api.calibration.node.glif.io/rpc/v1
-```
-
-**Expected Output:**
-```
-blockHash            0x5ee531cdfa242747a6363bb038c789440a5f2eaf957d55198b00f50f050a83ae
-blockNumber          3090172
-contractAddress
-cumulativeGasUsed    0
-effectiveGasPrice    247272
-from                 0x5a0c7D45C3834E4eB18c26C60932B757A43B7B0B
-gasUsed              103631401
-status               1 (success)
-transactionHash      0xd1346ed5432df9537498df196ff081a4021af8406afdb4b6c6cff8ffea0df208
-transactionIndex     2
-type                 2
-to                   0x1096025c9D6B29E12E2f04965F6E64d564Ce0750
-```
-
-**What to check:**
-- **status**: `1 (success)` means the transaction succeeded
-- **gasUsed**: `103631401` - amount of gas consumed for the deposit
-- **from**: Your wallet address
-- **to**: `0x1096025c9D6B29E12E2f04965F6E64d564Ce0750` - The Payments contract address
-- **blockNumber**: `3090172` - block where transaction was confirmed
-
-> 💡 **Note**: This is the same verification method we used in Command 2. The transaction receipt proves the 50 USDFC deposit succeeded on-chain.
-
----
 
 ## Part 3: Create GitHub Actions from CLI (Optional)
 
@@ -1236,8 +1148,8 @@ gh secret set <name>                      # Set secret
 ### Manual Checks
 
 ```bash
-# Check FIL balance
-cast balance <address> --rpc-url <rpc-url>
+# Check wallet balance and payment status
+filecoin-pin payments status
 
 # Check transaction
 cast receipt <tx-hash> --rpc-url <rpc-url>

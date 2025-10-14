@@ -295,14 +295,13 @@ Data Set #325 • live
 # Check transaction
 cast receipt 0x... --rpc-url $RPC_URL
 
-# Compare balances
+# Check wallet balance and payment status
 filecoin-pin payments status
-cast balance $WALLET_ADDRESS --rpc-url $RPC_URL
 ```
 
 **[VOICEOVER]**
-"Both show same balance."
 "CLI queries blockchain directly."
+"Shows live wallet and payment data."
 "No cached data."
 
 ---

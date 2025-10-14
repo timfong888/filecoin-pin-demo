@@ -14,10 +14,8 @@ cast receipt 0xc85e49d2ed745cc8c5d7115e7c45a1243ec25da7e73e224a744887783afea42b 
 # status: 1 (success)
 # blockNumber: 3090172
 
-# Compare balance methods
+# Check wallet balance and payment status
 filecoin-pin payments status
-cast balance $WALLET_ADDRESS --rpc-url $RPC_URL
 
-# Both return identical values
 # CLI queries blockchain directly - no cached data
 EOF
