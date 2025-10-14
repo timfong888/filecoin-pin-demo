@@ -30,12 +30,10 @@ Verify your data is stored with cryptographic proofs:
 filecoin-pin data-set 325
 ```
 
-**Key proof indicators:**
-- **Status: live** - Active with ongoing PDP proofs
-- **PDP rail ID: 631** - Active payment rail for storage proofs
-- **Min proving period: 30 epochs** - Proofs submitted every 15 minutes
-- **CommP** - Cryptographic piece commitments (Filecoin piece CIDs)
-- **Leaf count: 21** - Merkle tree leaves used in proof verification
+**What proves your files are stored:**
+- Your files are listed: demo.txt and my-data/
+- **Status: live** - Actively stored with ongoing proofs
+- **Proofs every 15 minutes** - Continuous verification
 
 See Step 4 below for full output.
 
@@ -347,28 +345,14 @@ Pieces
 Data set inspection complete
 ```
 
-**Cryptographic Proof Information:**
+**What this proves:**
 
-This command queries the blockchain to show proof that your data is stored:
+The CLI shows your data is stored on Filecoin with ongoing verification:
 
-**🔐 Proof Elements:**
-- **Status: live** - Data set is active with ongoing PDP (Proof of Data Possession) proofs
-- **PDP rail ID: 631** - Active payment rail funding continuous proof verification
-- **Min proving period: 30 epochs** - Provider submits proofs every 15 minutes
-- **Leaf count: 21** - Merkle tree leaves used in cryptographic verification
-- **CommP (Piece Commitments)** - Cryptographic commitments proving data integrity:
-  - Piece #0: `bafkzcibcfab4grpgq6e6rva4kfuxfcvibdzx3kn2jdw6q3zqgwt5cou7j6k4wfq`
-  - Piece #1: `bafkzcibcjmcnyio2ocxhmtq34uh5ct425xzpnor532zku7tjvqf5toodbxtsqhi`
-
-**📦 Stored Data:**
-- **Pieces stored: 2** - demo.txt (#0) and my-data/ directory (#1)
-- **Total size: 672.0 B** - Combined size of both pieces
-- **Root CIDs** - IPFS content identifiers for retrieval
-
-**💰 Payment & Provider:**
-- **Service URL**: https://calib.ezpdpz.net - Direct access to download pieces
-- **Storage price**: < 0.0001 USDFC/TiB/month
-- **Provider**: ezpdpz-calib (ID 3)
+- **Your files**: demo.txt and my-data/ directory (2 pieces, 672 bytes)
+- **Status: live** - Actively stored with continuous proof verification
+- **Proofs every 15 minutes** - Provider submits cryptographic proofs
+- **Provider**: ezpdpz-calib stores your data at https://calib.ezpdpz.net
 
 > 💡 **Note**: This command queries the smart contracts on-chain to retrieve all data set information. The data shown is live blockchain state, not cached data.
 
