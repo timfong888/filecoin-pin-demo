@@ -1,13 +1,9 @@
 # Filecoin Pin CLI + GitHub Actions Walkthrough
-> Update: 10.13.2025 2:45 PM PDT
+> Update: 10.13.2025 4:00 PM PDT
 
 **How to use the Filecoin Pin CLI and creating GitHub Actions from the terminal**
 
 ## Get Started Now
-
----
-
-## Fast Start: Three Steps to Filecoin Storage
 
 ### 1. Setup Payments
 
@@ -21,11 +17,15 @@ Upload your file with automatic funding:
 
 ![Upload Data](video/screenshots/fast-start-02-upload-data.png)
 
-### 3. Retrieve over Gateway
+### 3. Retrieve over an IPFS Gateway
 
 Retrieve your data using the IPFS gateway:
 
 ![Get Data](video/screenshots/fast-start-03-get-data.png)
+
+### 4. Prove Storage
+Verify your data is stored with cryptographic proofs:
+[Add a screenshot that shows using the CLI to access proofs]
 
 ---
 
@@ -37,27 +37,6 @@ Retrieve your data using the IPFS gateway:
 1. Existing IPFS developers who want to use Filecoin to persist their data
 2. Technical users who want to use GitHub Actions to automate deployment of IPFS Files onto decentralized storage
 3. Agent builders that want to store their agent cards and validation materials on Filecoin for cryptographic proof of storage
-
-## Why This Walkthrough?
-
-**What You'll Learn:** This walkthrough shows you how to:
-1. **Upload IPFS Files to Filecoin** - CLI commands
-2. **Pay with stablecoins (USDFC)** - Funds from a crypto wallet and paid from a Smart Contract to Storage Providers (SP)
-3. **Verify cryptographic proof** - Use an Explorer, CLI, or RPC call to verify your data is stored and with whom
-4. **Automate with GitHub Actions** - CI/CD pipelines that save to Filecoin automatically
-
-By the end of this walkthrough, you'll have uploaded data to Filecoin, verified it with cryptographic proofs, and automated the entire process with GitHub Actions - all from your terminal (with the exception of getting USDFC/tFIL from a faucet).
-
----
-
-## How This Walkthrough Works
-
-The CLI makes your uploaded files into IPFS CIDs that are then stored on a decentralized storage network.
-
-**Three key steps:**
-1. **Setup Payments** - Configure payment permissions for storage
-2. **Store** - Upload files to Filecoin with cryptographic proofs
-3. **Verify** - Check your data is stored and retrieve it via IPFS gateways
 
 ---
 
@@ -136,30 +115,12 @@ export WALLET_ADDRESS="0x5a0c7D45C3834E4eB18c26C60932B757A43B7B0B"
 
 ---
 
-### Step 0.2: Check Initial Balance
 
-Verify your new wallet balance (should be 0 before using faucet):
-
-```bash
-cast balance $WALLET_ADDRESS --rpc-url $RPC_URL
-```
-
-**Expected Output:**
-```
-0
-```
-
-Your wallet has 0 tFIL. You'll need to fund it using a faucet in the next step.
-
----
-
-### Step 0.3: Fund Wallet with tFIL (Testnet FIL)
+### Step 0.2: Fund Wallet with tFIL (Testnet FIL)
 
 > **Browser Required**: All Calibration faucets now require browser interaction due to CAPTCHA/anti-bot measures. There is no pure CLI method for this step.
 
 Get testnet FIL from one of the available Calibration faucets. This is a brief browser visit - afterwards you can return to CLI-only workflow.
-
-#### Available Calibration Faucets
 
 > **Minimum Required**: You need **~80-100 tFIL** total to mint the minimum 200 USDFC in Step 0.4. Faucets provide different amounts.
 
@@ -173,7 +134,6 @@ open "https://faucet.calibnet.chainsafe-fil.io/funds.html"
 - Confirmation time: 30-60 seconds
 
 #### Verify Funds Arrived
-[Don't add othe rmethods, let's keep it simple and use CLI where possible]
 
 ```bash
 filecoin-pin payments status --private-key $PRIVATE_KEY --rpc-url $RPC_URL
@@ -234,7 +194,7 @@ open "https://stg.usdfc.net"
 
 1. Connect MetaMask wallet
 2. Click "Open Trove"
-3. Enter collateral: `90 FIL` (leaves ~10 FIL for gas fees)
+3. Enter collateral: `98 FIL` (leaves ~2 FIL for gas fees)
 4. Enter borrow amount: `200 USDFC` (minimum)
 5. Review collateral ratio (should be >150%)
 6. Confirm transaction in MetaMask
@@ -273,9 +233,9 @@ Status check complete
 ```
 
 **What happened:**
-- Locked ~90 FIL as collateral
+- Locked ~98 FIL as collateral
 - Minted 200 USDFC
-- Remaining: ~10 tFIL for gas fees
+- Remaining: ~2 tFIL for gas fees
 - Next: Setup payments for storage
 
 ---
@@ -351,7 +311,7 @@ Status check complete
 
 **What this shows:**
 - **Address**: Your wallet address (0x5a0c7D45C3834E4eB18c26C60932B757A43B7B0B)
-- **FIL balance**: ~10 tFIL remaining (after collateral for USDFC)
+- **FIL balance**: ~2 tFIL remaining (after collateral for USDFC)
 - **USDFC wallet**: 200 USDFC available
 - **Storage Deposit**: 0 USDFC deposited (needs setup)
 - **Payment Rails**: None configured yet
@@ -385,7 +345,7 @@ Account:
   Wallet: 0x5a0c7D45C3834E4eB18c26C60932B757A43B7B0B
   Network: calibration
 Balances:
-  FIL: 9.9999 tFIL
+  FIL: 1.9999 tFIL
   USDFC wallet: 200.0000 USDFC
   USDFC deposited: 0.0000 USDFC
 
@@ -446,7 +406,7 @@ Address: 0x5a0c7D45C3834E4eB18c26C60932B757A43B7B0B
 Network: calibration
 
 Wallet
-  9.9999 tFIL
+  1.9999 tFIL
   200.0000 USDFC
 
 Storage Deposit
@@ -972,7 +932,7 @@ Address: 0x5a0c7D45C3834E4eB18c26C60932B757A43B7B0B
 Network: calibration
 
 Wallet
-  9.999859112291218814 tFIL
+  1.999933983437119844 tFIL
   150.0000 USDFC
 
 Storage Deposit
@@ -1011,14 +971,14 @@ cast --to-unit 54999859112291218814 ether
 
 **Expected Output:**
 ```
-9.999859112291218814
+1.999933983437119844
 ```
 
 ![Compare Balance Methods](screenshots/15-compare-balances.png)
 
 **Comparison result:**
-- ✅ `filecoin-pin payments status`: **9.999859112291218814 tFIL**
-- ✅ `cast balance`: **9.999859112291218814 FIL**
+- ✅ `filecoin-pin payments status`: **1.999933983437119844 tFIL**
+- ✅ `cast balance`: **1.999933983437119844 FIL**
 - ✅ **Both return identical values** - confirming `filecoin-pin` queries live blockchain state
 
 > 💡 **Note**: This proves that `filecoin-pin payments status` queries the blockchain directly via RPC, not from a cached database. The balances are identical down to the smallest unit (wei).
