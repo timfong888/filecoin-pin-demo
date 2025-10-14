@@ -1,7 +1,3 @@
-#!/bin/bash
-# Fast Start 01: Setup Payments
-
-cat << 'EOF'
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #   01. SETUP PAYMENTS
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -18,4 +14,3 @@ filecoin-pin payments setup --auto
 #   WarmStorage: Ready to upload
 #
 # Use --auto-fund when uploading to handle deposits automatically
-EOF

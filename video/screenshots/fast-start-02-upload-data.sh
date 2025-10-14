@@ -1,7 +1,3 @@
-#!/bin/bash
-# Fast Start 02: Upload Data
-
-cat << 'EOF'
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #   02. UPLOAD DATA
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -22,4 +18,3 @@ filecoin-pin add --auto-fund demo.txt
 # Size: 239.0 B
 # Data Set ID: 325
 # Transaction: 0xabc...def
-EOF

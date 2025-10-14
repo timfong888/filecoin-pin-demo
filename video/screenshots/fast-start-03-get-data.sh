@@ -1,7 +1,3 @@
-#!/bin/bash
-# Fast Start 03: Get Data over Gateway
-
-cat << 'EOF'
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #   03. GET DATA OVER GATEWAY
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -20,4 +16,3 @@ echo "Visit: https://ipfs.io/ipfs/${ROOT_CID}/demo.txt"
 # - https://ipfs.io/ipfs/<CID>
 # - https://<CID>.ipfs.dweb.link/
 # - https://gateway.pinata.cloud/ipfs/<CID>
-EOF
