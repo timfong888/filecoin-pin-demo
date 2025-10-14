@@ -1,9 +1,9 @@
 # Filecoin Pin Launch – Public FAQ
 
-### 1) What is Filecoin Pin?
+###  What is Filecoin Pin?
 Filecoin Pin stores IPFS content on the Filecoin Network of decentralized Storage Providers. It enables developers to programmatically pay for storage and retrieval with Filecoin Pay. When SPs prove storage, they are paid from the developers Filecoin Pay Account.
 
-### 2) How can I use Filecoin Pin today?
+### How can I use Filecoin Pin today?
 Two paths are available:
 
 **Website:** Upload files in your browser. Uses a pre-funded test wallet.
@@ -12,12 +12,11 @@ Two paths are available:
 
 Both run on Calibration testnet. They use tFIL and USDFC. Data has no persistence guarantees while on Calibnet.
 
-### 3) What do I need to get started?
+### What do I need to get started?
 
-- Go to the Filecoin Pin dApp: https://pin.....
-- CLI quickstart: https://docs.filecoin.io....{link here}
+- You can find different links related to Filecoin Pin here: https://docs.filecoin.io/builder-cookbook/filecoin-pin/
 
-### 4) How do payments and approvals work?
+### How do payments and approvals work?
 
 **Website:** The demo wallet handles payments. It has been prefunded with testnet USDFC and FIL. Users don't need to connect their own wallet.
 
@@ -25,24 +24,24 @@ Both run on Calibration testnet. They use tFIL and USDFC. Data has no persistenc
 
 Storage providers receive payment after cryptographically proving data possession.
 
-### 5) How does auto-funding work?
+### How does auto-funding work?
 
 Use `--auto-fund` when uploading. The CLI calculates storage costs automatically. It deposits the right amount of USDFC to your payment rail.
 
 No manual deposit calculations needed. The system handles it.
 
-### 6) How long is my data stored?
+### How long is my data stored?
 This runs on Calibration testnet only. Treat it as a demo. No duration guarantees exist for Website or CLI.
 
 Mainnet will offer persistence guarantees. Data persists while you maintain deposits. The CLI supports auto-funding for storage.
 
-### 7) What is a Data Set?
+### What is a Data Set?
 
 A Data Set groups your uploads together. Each upload becomes a "piece" within the Data Set. Multiple files you upload share the same payment rail.
 
 Check your Data Set with `filecoin-pin data-set <id>`.
 
-### 8) How do I retrieve my data?
+### How do I retrieve my data?
 
 Three methods:
 
@@ -52,7 +51,7 @@ Three methods:
 
 **IPFS Tools:** Use Kubo, Helia, IPFS Desktop with your root CID.
 
-### 9) What is a piece CID vs root CID?
+### What is a piece CID vs root CID?
 
 **Root CID** (bafybei...) is your IPFS content identifier. Use this to retrieve your data.
 
@@ -60,7 +59,7 @@ Three methods:
 
 Both are linked cryptographically on-chain.
 
-### 10) How do I verify my data is actually stored?
+### How do I verify my data is actually stored?
 
 Two ways to verify:
 
@@ -70,7 +69,7 @@ Two ways to verify:
 
 Both methods show CommP and proof state directly from blockchain state.
 
-### 11) How do I access the code for the dApp and CLI?
+### How do I access the code for the dApp and CLI?
 
 See the repos as reference implementations and to fork for my own project?
 
@@ -78,8 +77,6 @@ See the repos as reference implementations and to fork for my own project?
 - CLI: https://github.com/filecoin-project/filecoin-pin
 
 ---
-
-
 
 ## References
 - Filecoin Pin CLI Docs: https://docs.filecoin.io{fill here}
