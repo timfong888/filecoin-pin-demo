@@ -301,6 +301,14 @@ Data set inspection complete
 
 > 💡 **Note**: This command queries the smart contracts on-chain to retrieve all data set information. The data shown is live blockchain state, not cached data.
 
+### Links
+Filecoin Pin CLI Docs: https://docs.filecoin.io/builder-cookbook/filecoin-onchain-cloud/filecoin-pin
+Filecoin Pin CLI Repo: https://github.com/filecoin-project/filecoin-pin
+Filecoin Pin Demo dApp: https://pin.filecoin.cloud/
+Filecoin Pin dApp Repo: https://github.com/filecoin-project/filecoin-pin-website
+Synapse SDK: https://github.com/FilOzone/synapse-sdk
+USDFC documentation: https://usdfc.io/ (or project docs as available)
+
 
 
 
