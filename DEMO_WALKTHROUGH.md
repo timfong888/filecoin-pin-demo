@@ -291,7 +291,7 @@ Data set inspection complete
 
 **Provider Details:**
 - **Service URL**: Direct access to download pieces
-- **Storage price**: < 0.0001 USDFC/TiB/month (very low for testnet)
+- **Storage price**: < 0.0001 USDFC/TiB/month
 - **Min proving period: 30 epochs** - Proofs submitted every 15 minutes
 
 **Pieces:**
@@ -305,7 +305,6 @@ Data set inspection complete
 - FAQ: [context/projects/filecoin-pinning/demo-walkthrough/10-13-faq-output.md](context/projects/filecoin-pinning/demo-walkthrough/10-13-faq-output.md)
 - Filecoin Pin CLI Docs: https://docs.filecoin.io/builder-cookbook/filecoin-onchain-cloud/filecoin-pin
 - Filecoin Pin CLI Repo: https://github.com/filecoin-project/filecoin-pin
-- Filecoin Pin Demo dApp: https://pin.filecoin.cloud/
 - Filecoin Pin dApp Repo: https://github.com/filecoin-project/filecoin-pin-website
 - Synapse SDK: https://github.com/FilOzone/synapse-sdk
 - USDFC documentation: https://usdfc.io/ (or project docs as available)
