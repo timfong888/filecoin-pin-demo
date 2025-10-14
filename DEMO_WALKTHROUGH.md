@@ -26,16 +26,7 @@ Retrieve your data using the IPFS gateway:
 ### 4. Prove Storage
 Verify your data is stored with cryptographic proofs:
 
-```bash
-filecoin-pin data-set 325
-```
-
-**What proves your files are stored:**
-- Your files are listed: demo.txt and my-data/
-- **Status: live** - Actively stored with ongoing proofs
-- **Proofs every 15 minutes** - Continuous verification
-
-See Step 4 below for full output.
+![Prove Storage](video/screenshots/fast-start-04-prove-storage.png)
 
 ---
 
@@ -116,9 +107,9 @@ open "https://faucet.calibnet.chainsafe-fil.io/funds.html"
 
 ### Step 0.3: Get USDFC Stablecoin
 
-1. Visit [USDFC minting app](https://stg.usdfc.net)
+1. [Setup MetaMask with Filecoin Calibration](https://docs.filecoin.io/basics/assets/metamask-setup) (1-click import available)
 2. Import your private key to MetaMask
-3. Add Filecoin Calibration network (Chain ID: 314159)
+3. Visit [USDFC minting app](https://stg.usdfc.net)
 4. Mint 200 USDFC using 98 FIL collateral
 
 Final state: ~2 tFIL (gas) + 200 USDFC (storage payments)
@@ -149,7 +140,8 @@ echo "RPC URL: $RPC_URL"
 
 ---
 
-## Part 1: Filecoin Pin CLI Commands
+
+## Step 1: Setup Payments
 
 All commands in this section use the environment variables set in Part 0 (Step 0.4). If you're starting a new terminal session, reload them:
 
@@ -161,7 +153,7 @@ source ~/.filecoin-pin-env
 
 ---
 
-### Step 1: Setup Payments
+
 
 Configure payment approvals (permissions only - deposits handled automatically with `--auto-fund`):
 
@@ -185,7 +177,7 @@ Use `--auto-fund` flag to automatically handle payment deposits (v0.7.0+).
 echo "Hello Filecoin from CLI!" > demo.txt
 
 # Upload to Filecoin
-filecoin-pin add --auto-fund demo.txt
+filecoin-pin add demo.txt
 ```
 
 
@@ -201,7 +193,9 @@ filecoin-pin add --auto-fund demo.txt
 
 ---
 
-**Upload a directory:**
+### Step 4b: Upload Directory
+
+Package multiple files into a single CAR:
 
 ```bash
 # Create test directory
@@ -225,29 +219,7 @@ filecoin-pin add --auto-fund my-data/
 
 ---
 
-### Step 3: Retrieve over IPFS Gateway
-
-Retrieve your uploaded data using any IPFS gateway:
-
-```bash
-# Using curl
-ROOT_CID="bafybeibh422kjvgfmymx6nr7jandwngrown6ywomk4vplayl4de2x553t4"
-curl "https://ipfs.io/ipfs/${ROOT_CID}/demo.txt"
-```
-
-**Output:**
-```
-Hello Filecoin from CLI!
-```
-
-**Other gateway options:**
-- `https://ipfs.io/ipfs/<CID>`
-- `https://<CID>.ipfs.dweb.link/`
-- `https://gateway.pinata.cloud/ipfs/<CID>`
-
----
-
-### Step 4: Prove Storage
+### Step 5: Prove Storage
 
 Get detailed information about a specific data set (this queries the blockchain directly) that includes proofs:
 
@@ -304,89 +276,31 @@ Pieces
 Data set inspection complete
 ```
 
-**What this proves:**
+**Key information explained:**
 
-The CLI shows your data is stored on Filecoin with ongoing verification:
+**Data Set Status:**
+- **live** - Data set is active with ongoing PDP proofs
+- **Pieces stored: 2** - Our demo.txt (#0) and my-data/ directory (#1)
+- **Leaf count: 21** - Total Merkle tree leaves across all pieces
+- **Total size: 672.0 B** - Combined size of both pieces
 
-- **Your files**: demo.txt and my-data/ directory (2 pieces, 672 bytes)
-- **Status: live** - Actively stored with continuous proof verification
-- **Proofs every 15 minutes** - Provider submits cryptographic proofs
-- **Provider**: ezpdpz-calib stores your data at https://calib.ezpdpz.net
+**Payment Rails:**
+- **PDP rail ID: 631** - Active payment rail for storage proofs
+- **Payer/Payee** - Payment flows from your wallet to the provider
+- **Commission: 0.00%** - No commission on this testnet provider
+
+**Provider Details:**
+- **Service URL**: Direct access to download pieces
+- **Storage price**: < 0.0001 USDFC/TiB/month (very low for testnet)
+- **Min proving period: 30 epochs** - Proofs submitted every 15 minutes
+
+**Pieces:**
+- Each piece shows its CommP (Filecoin piece CID) and Root CID (IPFS content ID)
+- Piece #0 = demo.txt (our single file upload)
+- Piece #1 = my-data/ (our directory upload)
 
 > 💡 **Note**: This command queries the smart contracts on-chain to retrieve all data set information. The data shown is live blockchain state, not cached data.
 
 
-
-## Quick Reference
-
-### filecoin-pin Commands
-
-```bash
-# Payment Management
-filecoin-pin payments status              # Check status
-filecoin-pin payments setup --auto        # Setup permissions (first time)
-filecoin-pin payments fund --days 30      # Adjust to exact 30-day runway
-filecoin-pin payments fund --amount 100   # Set exact 100 USDFC deposit
-
-# Upload to Filecoin
-filecoin-pin add <file>                   # Upload file
-filecoin-pin add --auto-fund <file>       # Upload with auto-funding (v0.7.0+)
-filecoin-pin add <directory>              # Upload directory
-filecoin-pin add --bare <file>            # Upload without wrapper
-
-# Data Set Management
-filecoin-pin data-set --ls                # List all
-filecoin-pin data-set <id>                # Inspect specific
-filecoin-pin data-set --ls might be changing to `filecoin-pin data list` # https://github.com/filecoin-project/filecoin-pin/issues/66
-```
-
-### GitHub CLI Commands
-
-```bash
-# Workflow Management
-gh workflow list                          # List workflows
-gh workflow run <workflow>                # Trigger workflow
-gh workflow run <workflow> -f key=value   # With inputs
-
-# Run Management
-gh run list                               # List runs
-gh run watch <run-id>                     # Watch run
-gh run view <run-id>                      # View details
-gh run view <run-id> --log                # View logs
-gh run view <run-id> --web                # Open in browser
-gh run download <run-id>                  # Download artifacts
-
-# Secret Management
-gh secret list                            # List secrets
-gh secret set <name>                      # Set secret
-```
-
-### Manual Checks
-
-```bash
-# Check wallet balance and payment status
-filecoin-pin payments status
-
-# Check transaction
-cast receipt <tx-hash> --rpc-url <rpc-url>
-
-# View on explorer
-open "https://calibration.filfox.info/address/<address>"
-open "https://calibration.filfox.info/tx/<tx-hash>"
-```
-
----
-
-## Summary
-
-### What We Covered
-
-- **filecoin-pin CLI** - Direct commands without server
-- **Manual payment checks** - Verify wallet state and deposits
-- **GitHub Actions** - Created entirely from CLI
-- **Workflow testing** - Using `gh` CLI for management
-- **Artifact retrieval** - Download results from terminal
-
----
 
 
