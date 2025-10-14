@@ -82,5 +82,5 @@ See the repos as reference implementations and to fork for my own project?
 - Filecoin Pin CLI Docs: https://docs.filecoin.io{fill here}
 - Filecoin Pin dApp Repo: https://github.com/filecoin-project/filecoin-pin-website
 - Synapse SDK: https://github.com/FilOzone/synapse-sdk
-- USDFC documentation: https://usdfc.io/ (or project docs as available)
+- USDFC documentation: https://docs.secured.finance/usdfc-stablecoin/getting-started 
 
