@@ -307,7 +307,7 @@ Data set inspection complete
 - Filecoin Pin CLI Repo: https://github.com/filecoin-project/filecoin-pin
 - Filecoin Pin dApp Repo: https://github.com/filecoin-project/filecoin-pin-website
 - Synapse SDK: https://github.com/FilOzone/synapse-sdk
-- USDFC documentation: https://usdfc.io/ (or project docs as available)
+- USDFC documentation: https://docs.secured.finance/usdfc-stablecoin/getting-started 
 
 
 
