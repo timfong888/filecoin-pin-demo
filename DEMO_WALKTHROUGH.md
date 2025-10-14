@@ -122,7 +122,7 @@ export WALLET_ADDRESS="0x5a0c7D45C3834E4eB18c26C60932B757A43B7B0B"
 
 Get testnet FIL from one of the available Calibration faucets. This is a brief browser visit - afterwards you can return to CLI-only workflow.
 
-> **Minimum Required**: You need **~80-100 tFIL** total to mint the minimum 200 USDFC in Step 0.4. Faucets provide different amounts.
+> **Minimum Required**: You need **~80-100 tFIL** total to mint the minimum 200 USDFC in Step 0.3. Faucets provide different amounts.
 
 **Recommended: ChainSafe Faucet (100 tFIL)**
 ```bash
@@ -160,7 +160,7 @@ No USDFC tokens found
 
 ---
 
-### Step 0.4: Get USDFC (Testnet Stablecoin)
+### Step 0.3: Get USDFC (Testnet Stablecoin)
 
 USDFC is required for Filecoin storage payments. You need to mint it using FIL as collateral.
 
@@ -240,7 +240,7 @@ Status check complete
 
 ---
 
-### Step 0.5: Create Environment File
+### Step 0.4: Create Environment File
 
 > I put my private key on this repo for DEMO purposes.  It is a TESTNET KEY.  **NEVER USE YOUR PRIVATE KEY IN A REPOSITORY OR EXPOSE IT**.
 
@@ -266,7 +266,7 @@ echo "RPC URL: $RPC_URL"
 
 ## Part 1: Filecoin Pin CLI Commands
 
-All commands in this section use the environment variables set in Part 0 (Step 0.5). If you're starting a new terminal session, reload them:
+All commands in this section use the environment variables set in Part 0 (Step 0.4). If you're starting a new terminal session, reload them:
 
 ```bash
 source ~/.filecoin-pin-env
