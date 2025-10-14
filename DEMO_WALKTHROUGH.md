@@ -276,7 +276,7 @@ Pieces
 Data set inspection complete
 ```
 
-**Key information explained:**
+**Key information:**
 
 **Data Set Status:**
 - **live** - Data set is active with ongoing PDP proofs
