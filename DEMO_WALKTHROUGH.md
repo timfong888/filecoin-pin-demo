@@ -88,52 +88,34 @@ cast --version
 
 > **Note**: The `filecoin-pin` CLI expects a `PRIVATE_KEY` environment variable. This section shows initial setup.
 
-### Step 0.1: Create Wallet and Get Testnet Tokens
+### Step 0.1: Generate a New Wallet
 
-**1. Generate wallet:**
+Generate wallet using Foundry:
 ```bash
 cast wallet new
 ```
 
-**2. Get testnet FIL** (100 tFIL via browser):
+Save the private key and wallet address.
+
+### Step 0.2: Get Testnet FIL
+
+Get 100 tFIL from ChainSafe faucet (requires browser):
 ```bash
 open "https://faucet.calibnet.chainsafe-fil.io/funds.html"
 ```
 
-**3. Get USDFC** (200 USDFC minimum):
-- Visit [USDFC minting app](https://stg.usdfc.net)
-- Import your private key to MetaMask
-- Add Filecoin Calibration network (Chain ID: 314159)
-- Mint 200 USDFC using 98 FIL collateral
-- See [full USDFC minting guide](https://stg.usdfc.net) for detailed instructions
+### Step 0.3: Get USDFC Stablecoin
 
-**Final wallet state after setup:**
-```bash
-filecoin-pin payments status
-```
+1. Visit [USDFC minting app](https://stg.usdfc.net)
+2. Import your private key to MetaMask
+3. Add Filecoin Calibration network (Chain ID: 314159)
+4. Mint 200 USDFC using 98 FIL collateral
 
-```
-Filecoin Onchain Cloud Payment Status
-
-━━━ Current Status ━━━
-Address: 0x5a0c7D45C3834E4eB18c26C60932B757A43B7B0B
-Network: calibration
-
-Wallet
-  ~2 tFIL (for gas fees)
-  200.0000 USDFC
-
-Storage Deposit
-  0.0000 USDFC deposited
-Payment Rails
-  No active payment rails
-```
-
-> **Ready!** You have tFIL for gas and USDFC for storage payments.
+Final state: ~2 tFIL (gas) + 200 USDFC (storage payments)
 
 ---
 
-### Step 0.2: Create Environment File
+### Step 0.4: Create Environment File
 
 > I put my private key on this repo for DEMO purposes.  It is a TESTNET KEY.  **NEVER USE YOUR PRIVATE KEY IN A REPOSITORY OR EXPOSE IT**.
 
@@ -159,7 +141,7 @@ echo "RPC URL: $RPC_URL"
 
 ## Part 1: Filecoin Pin CLI Commands
 
-All commands in this section use the environment variables set in Part 0 (Step 0.2). If you're starting a new terminal session, reload them:
+All commands in this section use the environment variables set in Part 0 (Step 0.4). If you're starting a new terminal session, reload them:
 
 ```bash
 source ~/.filecoin-pin-env
@@ -169,50 +151,7 @@ source ~/.filecoin-pin-env
 
 ---
 
-### Command 1: Check Payment Status
-
-Check your current payment configuration and balance:
-
-```bash
-filecoin-pin payments status
-```
-
-![Payment Status Before Setup](screenshots/06-payments-status-before-setup.png)
-
-**Expected Output (before setup):**
-```
-Filecoin Onchain Cloud Payment Status
-
-✓ Configuration loaded
-
-━━━ Current Status ━━━
-Address: 0x5a0c7D45C3834E4eB18c26C60932B757A43B7B0B
-Network: calibration
-
-Wallet
-  9.999898883561339543 tFIL
-  200.0000 USDFC
-
-Storage Deposit
-  0.0000 USDFC deposited
-Payment Rails
-  No active payment rails
-WarmStorage Usage
-  No active spend detected
-Status check complete
-```
-
-**What this shows:**
-- **Address**: Your wallet address (0x5a0c7D45C3834E4eB18c26C60932B757A43B7B0B)
-- **FIL balance**: ~2 tFIL remaining (after collateral for USDFC)
-- **USDFC wallet**: 200 USDFC available
-- **Storage Deposit**: 0 USDFC deposited (needs setup)
-- **Payment Rails**: None configured yet
-- **Next**: Run `payments setup` to deposit USDFC and configure rails
-
----
-
-### Command 2: Setup Payments (First Time Only)
+### Step 1: Setup Payments
 
 Configure payment approvals (permissions only - deposits handled automatically with `--auto-fund`):
 
@@ -222,185 +161,23 @@ filecoin-pin payments setup --auto
 
 > **What `--auto` does**: Configures WarmStorage contract permissions automatically. No deposit required at this step - use `--auto-fund` when uploading to handle deposits automatically.
 
-**Expected Output:**
-```
-Filecoin Onchain Cloud Payment Setup
-
-Running in auto mode...
-
-✓ Connected to calibration
-
-✓ Balance check complete
-
-Account:
-  Wallet: 0x5a0c7D45C3834E4eB18c26C60932B757A43B7B0B
-  Network: calibration
-Balances:
-  FIL: 1.9999 tFIL
-  USDFC wallet: 200.0000 USDFC
-  USDFC deposited: 0.0000 USDFC
-
-✓ WarmStorage permissions configured
-
-Transaction:
-  0xf61d885b2316589efdcc6637e8b17c06c1439fefd626ba121a08023c0ebaf2a1
-
-━━━ Setup Complete ━━━
-
-Network: calibration
-Status: Ready to upload with --auto-fund
-```
-
-**What happens:**
-1. Connects to Calibration network
-2. Checks wallet balances
-3. Configures WarmStorage contract permissions
-4. Completes setup - ready for uploads
-
-**Verify setup completed:**
-```bash
-filecoin-pin payments status
-```
-
-**Expected Output (after setup):**
-```
-Filecoin Onchain Cloud Payment Status
-
-✓ Configuration loaded
-
-━━━ Current Status ━━━
-Address: 0x5a0c7D45C3834E4eB18c26C60932B757A43B7B0B
-Network: calibration
-
-Wallet
-  1.9999 tFIL
-  200.0000 USDFC
-
-Storage Deposit
-  0.0000 USDFC deposited
-Payment Rails
-  No active payment rails
-WarmStorage Usage
-  Ready to upload
-Status check complete
-```
-
-✅ **You're now ready to upload files! Use `--auto-fund` with your first upload to automatically deposit the right amount.**
 
 ---
 
-[This is actually using `add` so it should be Step 3: Upload a File to Filecoin]
+### Step 2: Upload Data
 
-### Step 3: Upload File with Automatic Funding
+Use `--auto-fund` flag to automatically handle payment deposits (v0.7.0+).
 
-> **Version requirement**: `--auto-fund` flag is available in v0.7.0 and later. 
-> Check your version with `filecoin-pin -V`.
-
-Instead of managing deposits separately, use `--auto-fund` with `add` or `import` commands to automatically ensure 10-day payment runway before each upload:
-
-```bash
-# Upload file with automatic funding
-filecoin-pin add --auto-fund demo.txt
-
-# Upload directory with automatic funding
-filecoin-pin add --auto-fund my-data/
-
-# Import CAR with automatic funding
-filecoin-pin import --auto-fund archive.car
-```
-
-**What `--auto-fund` does:**
-1. **Pre-flight check** - Before upload, checks if your current deposit can maintain 10+ days runway AFTER this upload
-2. **Smart calculation** - Factors in the NEW file's lockup + ongoing storage costs
-3. **Automatic deposit** - If insufficient, deposits exact amount needed to reach 10 days
-4. **Seamless upload** - Continues with upload after funding adjustment
-
-**How it calculates:**
-```
-CurrentAvailable = Deposited - LockedForExistingFiles
-NewFileCost = NewFileLockup + (NewFileStorageCost * 10 days)
-TotalNeeded = CurrentAvailable + NewFileCost
-
-If TotalNeeded > CurrentDeposit:
-  Deposit = TotalNeeded - CurrentDeposit
-```
-
-**Expected Output (sufficient funds):**
-```
-✓ Funding requirements met
-```
-
-**Expected Output (needs funding):**
-```
-✓ Funding requirements met
-
-Auto-funding completed:
-  Deposited 6.4 USDFC
-  Total deposited: 11.4 USDFC
-  Runway: ~10 day(s) 2 hour(s)
-  Approval tx: 0x123...
-  Transaction: 0x456...
-```
-
----
-
-
-### Step4a: Upload a File to Filecoin
+**Upload a file:**
 
 ```bash
 # Create test file
 echo "Hello Filecoin from CLI!" > demo.txt
 
 # Upload to Filecoin
-filecoin-pin add demo.txt
+filecoin-pin add --auto-fund demo.txt
 ```
 
-> ⏱️ **Expected Duration**: 2-5 minutes (waiting for blockchain confirmation)
-
-**Expected Output:**
-```
-Filecoin Pin Add
-
-✓ File validated (25.0 B)
-
-✓ Connected to calibration
-
-✓ WarmStorage permissions configured
-
-  Transaction: 0x0800c4e4730b781ea634456b99e49dc0069c76a95137fef79dc6b4d281133d8a
-✓ Payment capacity verified
-
-✓ File packed with root CID: bafybeibh422kjvgfmymx6nr7jandwngrown6ywomk4vplayl4de2x553t4
-
-✓ IPFS content loaded (214.0 B)
-
-✓ Payment capacity verified
-
-✓ Storage context ready
-
-━━━ Add Complete ━━━
-
-Network: calibration
-
-Add Details
-  File: demo.txt
-  Size: 214.0 B
-  Root CID: bafybeibh422kjvgfmymx6nr7jandwngrown6ywomk4vplayl4de2x553t4
-
-Filecoin Storage
-  Piece CID: bafkzcibcfab4grpgq6e6rva4kfuxfcvibdzx3kn2jdw6q3zqgwt5cou7j6k4wfq
-  Piece ID: 0
-  Data Set ID: 325
-
-Storage Provider
-  Provider ID: 3
-  Name: ezpdpz-calib
-  Direct Download URL: https://calib.ezpdpz.net/piece/bafkzcibcfab4grpgq6e6rva4kfuxfcvibdzx3kn2jdw6q3zqgwt5cou7j6k4wfq
-
-Transaction
-  Hash: 0xc85e49d2ed745cc8c5d7115e7c45a1243ec25da7e73e224a744887783afea42b
-Add completed successfully
-```
 
 **Key values explained:**
 - **Root CID**: `bafybeibh422kjvgfmymx6nr7jandwngrown6ywomk4vplayl4de2x553t4` - IPFS content identifier for your data
@@ -414,9 +191,7 @@ Add completed successfully
 
 ---
 
-### Step 4b: Upload Directory
-
-Package multiple files into a single CAR:
+**Upload a directory:**
 
 ```bash
 # Create test directory
@@ -428,8 +203,6 @@ echo "File 3" > my-data/file3.txt
 # Upload entire directory with auto-funding
 filecoin-pin add --auto-fund my-data/
 ```
-
-> ⏱️ **Expected Duration**: 2-5 minutes (waiting for blockchain confirmation)
 
 **Expected Output:**
 ```
@@ -483,32 +256,31 @@ Add completed successfully
 
 ---
 
-### Command 5: List All Data Sets
+### Step 3: Retrieve over IPFS Gateway
 
-View all data sets you've created:
-
-> FYI `filecoin-pin data-set --ls` might be changing to filecoin-pin data list
-> Tracking at https://github.com/filecoin-project/filecoin-pin/issues/66
+Retrieve your uploaded data using any IPFS gateway:
 
 ```bash
-filecoin-pin data-set --ls
+# Using curl
+ROOT_CID="bafybeibh422kjvgfmymx6nr7jandwngrown6ywomk4vplayl4de2x553t4"
+curl "https://ipfs.io/ipfs/${ROOT_CID}/demo.txt"
 ```
 
+**Output:**
+```
+Hello Filecoin from CLI!
+```
 
-**Key information:**
-- **Data Set #325**: Contains all our uploads (both the single file and directory)
-- **Pieces stored: 2**: One piece for `demo.txt`, one for `my-data/` directory
-- **Provider**: ezpdpz-calib (ID 3) - The storage provider managing our data
-- **PDP rail ID: 631**: Active payment rail for storage proofs
-- **Status**: `live • managed` - Data set is active with ongoing proofs
-
-> 💡 **Note**: Multiple uploads using the same payment configuration are grouped into a single data set. Each upload becomes a separate "piece" within that data set.
+**Other gateway options:**
+- `https://ipfs.io/ipfs/<CID>`
+- `https://<CID>.ipfs.dweb.link/`
+- `https://gateway.pinata.cloud/ipfs/<CID>`
 
 ---
 
-### Step 6: Inspect Specific Data Set
+### Step 4: Prove Storage
 
-Get detailed information about a specific data set (this queries the blockchain directly):
+Get detailed information about a specific data set (this queries the blockchain directly) that includes proofs:
 
 ```bash
 filecoin-pin data-set 325
@@ -588,411 +360,7 @@ Data set inspection complete
 
 > 💡 **Note**: This command queries the smart contracts on-chain to retrieve all data set information. The data shown is live blockchain state, not cached data.
 
----
 
-## Part 2: Manual Payment and Wallet Checks
-
-This section demonstrates that `filecoin-pin` queries live blockchain data, not cached information.
-
-### Check Wallet Balance
-
-```bash
-filecoin-pin payments status
-```
-
-**Expected Output:**
-```
-Filecoin Onchain Cloud Payment Status
-
-✓ Configuration loaded
-
-━━━ Current Status ━━━
-Address: 0x5a0c7D45C3834E4eB18c26C60932B757A43B7B0B
-Network: calibration
-
-Wallet
-  1.999933983437119844 tFIL
-  150.0000 USDFC
-
-Storage Deposit
-  49.9000 USDFC deposited
-  Capacity: ~27.2 TiB/month (includes 10-day safety reserve)
-Payment Rails
-  1 active, 0 terminated
-  Daily cost: 0.0000000001 USDFC
-  Monthly cost: 0.000000003 USDFC
-  Pending settlement: 0.0000000000 USDFC
-  1 rail(s) need settlement
-WarmStorage Usage
-  Spend rate: 0.0000000000 USDFC/epoch
-  Locked: 0.000000001 USDFC (~10-day reserve)
-  Runway: ~1342123288 year(s) 8 month(s) 12 day(s)
-Status check complete
-```
-
----
-
-
-## Part 3: Create GitHub Actions from CLI (Optional)
-
-> 💡 **Note**: This section is optional and demonstrates how to automate Filecoin uploads using GitHub Actions. You'll need a GitHub repository and the `gh` CLI tool installed.
-
-### Step 1: Authenticate with GitHub
-
-```bash
-gh auth login
-```
-
-**Interactive prompts:**
-```
-? What account do you want to log into? GitHub.com
-? What is your preferred protocol for Git operations? HTTPS
-? Authenticate Git with your GitHub credentials? Yes
-? How would you like to authenticate GitHub CLI? Login with a web browser
-```
-
-**Verify:**
-```bash
-gh auth status
-```
-
-**Expected:**
-```
-github.com
-  ✓ Logged in to github.com as your-username
-  ✓ Git operations configured to use https
-  ✓ Token: gho_****
-```
-
----
-
-### Step 2: Set Up Repository Secrets
-
-```bash
-# Navigate to your repository
-cd /path/to/your/repo
-
-# Set Filecoin private key (use your own private key, not the demo one)
-gh secret set FILECOIN_PRIVATE_KEY
-# Paste when prompted: 0x...
-
-# Set RPC URL
-gh secret set FILECOIN_RPC_URL --body "https://api.calibration.node.glif.io/rpc/v1"
-
-# Verify secrets
-gh secret list
-```
-
-**Expected Output:**
-```
-FILECOIN_PRIVATE_KEY    Updated 2025-10-09
-FILECOIN_RPC_URL        Updated 2025-10-09
-```
-
-> ⚠️ **Security**: Never commit private keys to git. Always use GitHub secrets or environment variables.
-
----
-
-### Step 3: Create Workflow - Upload File
-
->  we have a tracking issue for making extraction from `filecoin-pin add upload.txt 2>&1 | tee result.txt`easier: https://github.com/filecoin-project/filecoin-pin/issues/4
-
-```bash
-mkdir -p .github/workflows
-
-cat > .github/workflows/upload-to-filecoin.yml << 'EOF'
-name: Upload to Filecoin
-
-on:
-  workflow_dispatch:
-    inputs:
-      content:
-        description: 'File content to upload'
-        required: true
-        default: 'Hello from GitHub Actions!'
-
-jobs:
-  upload:
-    runs-on: ubuntu-22.04
-    steps:
-      - name: Setup Node.js 22
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-
-      - name: Install filecoin-pin
-        run: npm install -g filecoin-pin
-
-      - name: Create Test File
-        run: |
-          echo "${{ inputs.content }}" > upload.txt
-          echo "File content:"
-          cat upload.txt
-
-      - name: Upload to Filecoin
-        env:
-          PRIVATE_KEY: ${{ secrets.FILECOIN_PRIVATE_KEY }}
-          RPC_URL: ${{ secrets.FILECOIN_RPC_URL }}
-        run: |
-          filecoin-pin add upload.txt 2>&1 | tee result.txt
-
-          # Extract key values
-          CID=$(grep 'CID:' result.txt | awk '{print $2}' || echo "N/A")
-          COMMP=$(grep 'CommP:' result.txt | awk '{print $2}' || echo "N/A")
-          TX=$(grep 'Transaction:' result.txt | awk '{print $2}' || echo "N/A")
-
-          echo "CID=$CID" >> $GITHUB_ENV
-          echo "COMMP=$COMMP" >> $GITHUB_ENV
-          echo "TX=$TX" >> $GITHUB_ENV
-
-      - name: Upload Results
-        uses: actions/upload-artifact@v4
-        with:
-          name: upload-results
-          path: |
-            upload.txt
-            result.txt
-
-      - name: Create Summary
-        run: |
-          echo "## Upload Complete! 🎉" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**CID:** \`${{ env.CID }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "**CommP:** \`${{ env.COMMP }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "**Transaction:** \`${{ env.TX }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "[View on Explorer](https://calibration.filfox.info/tx/${{ env.TX }})" >> $GITHUB_STEP_SUMMARY
-EOF
-```
-
----
-
-### Step 4: Create Workflow - Check Payment Status
-
-```bash
-cat > .github/workflows/check-payment.yml << 'EOF'
-name: Check Payment Status
-
-on:
-  workflow_dispatch:
-
-jobs:
-  check:
-    runs-on: ubuntu-22.04
-    steps:
-      - name: Setup Node.js 22
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-
-      - name: Install filecoin-pin
-        run: npm install -g filecoin-pin
-
-      - name: Check Payment Status
-        env:
-          PRIVATE_KEY: ${{ secrets.FILECOIN_PRIVATE_KEY }}
-          RPC_URL: ${{ secrets.FILECOIN_RPC_URL }}
-        run: |
-          filecoin-pin payments status | tee payment-status.txt
-
-      - name: Upload Status Report
-        uses: actions/upload-artifact@v4
-        with:
-          name: payment-status
-          path: payment-status.txt
-EOF
-```
-
----
-
-### Step 5: Create Workflow - List Data Sets
-
-```bash
-cat > .github/workflows/list-datasets.yml << 'EOF'
-name: List Data Sets
-
-on:
-  workflow_dispatch:
-
-jobs:
-  list:
-    runs-on: ubuntu-22.04
-    steps:
-      - name: Setup Node.js 22
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-
-      - name: Install filecoin-pin
-        run: npm install -g filecoin-pin
-
-      - name: List All Data Sets
-        env:
-          PRIVATE_KEY: ${{ secrets.FILECOIN_PRIVATE_KEY }}
-          RPC_URL: ${{ secrets.FILECOIN_RPC_URL }}
-        run: |
-          filecoin-pin data-set --ls | tee datasets.txt
-
-      - name: Create Report
-        run: |
-          {
-            echo "# Filecoin Data Sets Report"
-            echo ""
-            echo "**Generated:** $(date -u)"
-            echo ""
-            echo '```'
-            cat datasets.txt
-            echo '```'
-          } > report.md
-
-      - name: Upload Report
-        uses: actions/upload-artifact@v4
-        with:
-          name: datasets-report
-          path: report.md
-EOF
-```
-
----
-
-### Step 6: Commit and Push Workflows
-
-```bash
-git add .github/workflows/*.yml
-
-git commit -m "feat: add filecoin-pin workflows"
-
-git push origin main
-```
-
----
-
-## Part 4: Test Workflows from CLI (Optional)
-
-> 💡 **Note**: This section continues from Part 3. It shows how to trigger and monitor GitHub Actions workflows from the command line.
-
-### List Available Workflows
-
-```bash
-gh workflow list
-```
-
-**Expected Output:**
-```
-Upload to Filecoin    active  upload-to-filecoin.yml
-Check Payment Status  active  check-payment.yml
-List Data Sets        active  list-datasets.yml
-```
-
----
-
-### Trigger File Upload
-
-```bash
-gh workflow run upload-to-filecoin.yml \
-  -f content="Demo upload at $(date)"
-```
-
-**Expected:**
-```
-✓ Created workflow_dispatch event for upload-to-filecoin.yml at main
-```
-
----
-
-### Get Latest Run ID
-
-```bash
-RUN_ID=$(gh run list --workflow=upload-to-filecoin.yml --limit 1 --json databaseId --jq '.[0].databaseId')
-echo "Run ID: $RUN_ID"
-```
-
----
-
-### Watch Run in Real-Time
-
-```bash
-gh run watch $RUN_ID
-```
-
-**Expected (updates every 3 seconds):**
-```
-Refreshing run status every 3 seconds. Press Ctrl+C to quit.
-
-✓ main Upload to Filecoin · 12345678901
-Triggered via workflow_dispatch 1 minute ago
-
-JOBS
-✓ upload in 1m45s (ID 98765432101)
-```
-
----
-
-### View Run Details
-
-```bash
-gh run view $RUN_ID
-```
-
-**Expected:**
-```
-✓ main Upload to Filecoin · 12345678901
-Triggered via workflow_dispatch 2 minutes ago
-
-JOBS
-✓ upload in 1m45s (ID 98765432101)
-  ✓ Setup Node.js 22
-  ✓ Install filecoin-pin
-  ✓ Create Test File
-  ✓ Upload to Filecoin
-  ✓ Upload Results
-  ✓ Create Summary
-
-View this run on GitHub: https://github.com/your-org/your-repo/actions/runs/12345678901
-```
-
----
-
-### View Workflow Logs
-
-```bash
-gh run view $RUN_ID --log
-```
-
-**Filter to specific step:**
-```bash
-gh run view $RUN_ID --log | grep "Upload to Filecoin" -A 10
-```
-
----
-
-### Download Artifacts
-
-```bash
-gh run download $RUN_ID --name upload-results
-```
-
-**Expected:**
-```
-✓ Downloaded artifact 'upload-results' to upload-results/
-```
-
-**View downloaded files:**
-```bash
-cat upload-results/result.txt
-```
-
----
-
-### View Run Summary
-
-Open the run in browser to see the formatted summary:
-
-```bash
-gh run view $RUN_ID --web
-```
-
----
 
 ## Quick Reference
 
