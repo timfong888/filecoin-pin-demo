@@ -25,7 +25,19 @@ Retrieve your data using the IPFS gateway:
 
 ### 4. Prove Storage
 Verify your data is stored with cryptographic proofs:
-[Add a screenshot that shows using the CLI to access proofs]
+
+```bash
+filecoin-pin data-set 325
+```
+
+**Key proof indicators:**
+- **Status: live** - Active with ongoing PDP proofs
+- **PDP rail ID: 631** - Active payment rail for storage proofs
+- **Min proving period: 30 epochs** - Proofs submitted every 15 minutes
+- **CommP** - Cryptographic piece commitments (Filecoin piece CIDs)
+- **Leaf count: 21** - Merkle tree leaves used in proof verification
+
+See Step 4 below for full output.
 
 ---
 
@@ -335,28 +347,28 @@ Pieces
 Data set inspection complete
 ```
 
-**Key information explained:**
+**Cryptographic Proof Information:**
 
-**Data Set Status:**
-- **live** - Data set is active with ongoing PDP proofs
-- **Pieces stored: 2** - Our demo.txt (#0) and my-data/ directory (#1)
-- **Leaf count: 21** - Total Merkle tree leaves across all pieces
+This command queries the blockchain to show proof that your data is stored:
+
+**🔐 Proof Elements:**
+- **Status: live** - Data set is active with ongoing PDP (Proof of Data Possession) proofs
+- **PDP rail ID: 631** - Active payment rail funding continuous proof verification
+- **Min proving period: 30 epochs** - Provider submits proofs every 15 minutes
+- **Leaf count: 21** - Merkle tree leaves used in cryptographic verification
+- **CommP (Piece Commitments)** - Cryptographic commitments proving data integrity:
+  - Piece #0: `bafkzcibcfab4grpgq6e6rva4kfuxfcvibdzx3kn2jdw6q3zqgwt5cou7j6k4wfq`
+  - Piece #1: `bafkzcibcjmcnyio2ocxhmtq34uh5ct425xzpnor532zku7tjvqf5toodbxtsqhi`
+
+**📦 Stored Data:**
+- **Pieces stored: 2** - demo.txt (#0) and my-data/ directory (#1)
 - **Total size: 672.0 B** - Combined size of both pieces
+- **Root CIDs** - IPFS content identifiers for retrieval
 
-**Payment Rails:**
-- **PDP rail ID: 631** - Active payment rail for storage proofs
-- **Payer/Payee** - Payment flows from your wallet to the provider
-- **Commission: 0.00%** - No commission on this testnet provider
-
-**Provider Details:**
-- **Service URL**: Direct access to download pieces
-- **Storage price**: < 0.0001 USDFC/TiB/month (very low for testnet)
-- **Min proving period: 30 epochs** - Proofs submitted every 15 minutes
-
-**Pieces:**
-- Each piece shows its CommP (Filecoin piece CID) and Root CID (IPFS content ID)
-- Piece #0 = demo.txt (our single file upload)
-- Piece #1 = my-data/ (our directory upload)
+**💰 Payment & Provider:**
+- **Service URL**: https://calib.ezpdpz.net - Direct access to download pieces
+- **Storage price**: < 0.0001 USDFC/TiB/month
+- **Provider**: ezpdpz-calib (ID 3)
 
 > 💡 **Note**: This command queries the smart contracts on-chain to retrieve all data set information. The data shown is live blockchain state, not cached data.
 
