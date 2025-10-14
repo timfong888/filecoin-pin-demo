@@ -214,47 +214,6 @@ echo "File 3" > my-data/file3.txt
 filecoin-pin add --auto-fund my-data/
 ```
 
-**Expected Output:**
-```
-Filecoin Pin Add
-
-✓ Directory validated
-
-✓ Connected to calibration
-
-✓ Payment capacity verified
-
-✓ Directory packed with root CID: bafybeig27btater5fpt3l67gbme3sebqk3ynwdhlbrbuk3q7espiyplan4
-
-✓ IPFS content loaded (433.0 B)
-
-✓ Payment capacity verified
-
-✓ Storage context ready
-
-━━━ Add Complete ━━━
-
-Network: calibration
-
-Add Details
-  File: my-data/
-  Size: 433.0 B
-  Root CID: bafybeig27btater5fpt3l67gbme3sebqk3ynwdhlbrbuk3q7espiyplan4
-
-Filecoin Storage
-  Piece CID: bafkzcibcjmcnyio2ocxhmtq34uh5ct425xzpnor532zku7tjvqf5toodbxtsqhi
-  Piece ID: 1
-  Data Set ID: 325
-
-Storage Provider
-  Provider ID: 3
-  Name: ezpdpz-calib
-  Direct Download URL: https://calib.ezpdpz.net/piece/bafkzcibcjmcnyio2ocxhmtq34uh5ct425xzpnor532zku7tjvqf5toodbxtsqhi
-
-Transaction
-  Hash: 0xc9fb1cc29632c9fa156cd15a179548e6bafc4fec20c1ba52b8656e8b7db04a39
-Add completed successfully
-```
 
 **Key details:**
 - **Root CID**: `bafybeig27btater5fpt3l67gbme3sebqk3ynwdhlbrbuk3q7espiyplan4` - IPFS directory structure
