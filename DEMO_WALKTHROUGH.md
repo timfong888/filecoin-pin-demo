@@ -86,161 +86,54 @@ cast --version
 
 ## Part 0: Wallet Setup from Scratch
 
-> **Note**: The `filecoin-pin` CLI does not include wallet creation commands. It expects you to provide a `PRIVATE_KEY` environment variable. This section shows how to create a wallet using standard tools (Node.js or Foundry).
+> **Note**: The `filecoin-pin` CLI expects a `PRIVATE_KEY` environment variable. This section shows initial setup.
 
-### Step 0.1: Generate a New Wallet
+### Step 0.1: Create Wallet and Get Testnet Tokens
 
-Generate a new Ethereum-compatible private key for Filecoin Calibration testnet:
-
-**Using cast (Foundry):**
+**1. Generate wallet:**
 ```bash
 cast wallet new
 ```
 
-**Expected Output:**
-```
-Successfully created new keypair.
-Address:     0x5a0c7D45C3834E4eB18c26C60932B757A43B7B0B
-Private key: 0x8eef...c414
-```
-
-> **IMPORTANT**: Save this private key securely! This is for TESTNET only. Never commit private keys to repositories.
-
-**Store in environment variable:**
-```bash
-export PRIVATE_KEY="0x8eef...c414"  # Use your full private key
-export RPC_URL="https://api.calibration.node.glif.io/rpc/v1"
-export WALLET_ADDRESS="0x5a0c7D45C3834E4eB18c26C60932B757A43B7B0B"
-```
-
----
-
-
-### Step 0.2: Fund Wallet with tFIL (Testnet FIL)
-
-> **Browser Required**: All Calibration faucets now require browser interaction due to CAPTCHA/anti-bot measures. There is no pure CLI method for this step.
-
-Get testnet FIL from one of the available Calibration faucets. This is a brief browser visit - afterwards you can return to CLI-only workflow.
-
-> **Minimum Required**: You need **~80-100 tFIL** total to mint the minimum 200 USDFC in Step 0.3. Faucets provide different amounts.
-
-**Recommended: ChainSafe Faucet (100 tFIL)**
+**2. Get testnet FIL** (100 tFIL via browser):
 ```bash
 open "https://faucet.calibnet.chainsafe-fil.io/funds.html"
 ```
 
-- Amount: **100 tFIL** per request
-- Steps: Enter address → Click "Send"
-- Confirmation time: 30-60 seconds
+**3. Get USDFC** (200 USDFC minimum):
+- Visit [USDFC minting app](https://stg.usdfc.net)
+- Import your private key to MetaMask
+- Add Filecoin Calibration network (Chain ID: 314159)
+- Mint 200 USDFC using 98 FIL collateral
+- See [full USDFC minting guide](https://stg.usdfc.net) for detailed instructions
 
-#### Verify Funds Arrived
-
-```bash
-filecoin-pin payments status --private-key $PRIVATE_KEY --rpc-url $RPC_URL
-```
-
-**Expected Output (after ChainSafe faucet - 100 tFIL):**
-```
-Filecoin Onchain Cloud Payment Status
-
-━━━ Current Status ━━━
-
-Address: 0x5a0c7D45C3834E4eB18c26C60932B757A43B7B0B
-Network: calibration
-
-Balances:
-  FIL: 100.00 tFIL
-  USDFC wallet: 0.00 USDFC
-  USDFC deposited: 0.00 USDFC
-
-No USDFC tokens found
-```
-
-**You now have 100 tFIL!** Ready for USDFC minting.
-
----
-
-### Step 0.3: Get USDFC (Testnet Stablecoin)
-
-USDFC is required for Filecoin storage payments. You need to mint it using FIL as collateral.
-
-**Using MetaMask + USDFC Web App**
-
-**Step 1: Import wallet to MetaMask**
-1. Open MetaMask browser extension
-2. Click account icon → "Import Account"
-3. Select "Private Key" method
-4. Paste: `0x8eef...c414`
-
-![alt text](<screenshots/add private key to metamask.jpg>)
-
-
-**Step 2: Add Filecoin Calibration network to MetaMask**
-- Network Name: `Filecoin Calibration`
-- RPC URL: `https://api.calibration.node.glif.io/rpc/v1`
-- Chain ID: `314159`
-- Currency Symbol: `tFIL`
-- Block Explorer: `https://calibration.filfox.info`
-
-**Step 3: Open USDFC app**
-```bash
-open "https://stg.usdfc.net"
-```
-
-**Step 4: Open a Trove (mint USDFC)**
-
-![alt text borrow 200 USDFC](<screenshots/borrow 200 USDFC.jpg>) 
-
-
-1. Connect MetaMask wallet
-2. Click "Open Trove"
-3. Enter collateral: `98 FIL` (leaves ~2 FIL for gas fees)
-4. Enter borrow amount: `200 USDFC` (minimum)
-5. Review collateral ratio (should be >150%)
-6. Confirm transaction in MetaMask
-7. Wait for confirmation (~30-60 seconds)
-
-**You now have 200 USDFC!**
-
-**Verify USDFC balance:**
+**Final wallet state after setup:**
 ```bash
 filecoin-pin payments status
 ```
 
-![USDFC Minted](screenshots/05-usdfc-minted.png)
-
-**Expected Output:**
 ```
 Filecoin Onchain Cloud Payment Status
-
-✓ Configuration loaded
 
 ━━━ Current Status ━━━
 Address: 0x5a0c7D45C3834E4eB18c26C60932B757A43B7B0B
 Network: calibration
 
 Wallet
-  9.999898883561339543 tFIL
+  ~2 tFIL (for gas fees)
   200.0000 USDFC
 
 Storage Deposit
   0.0000 USDFC deposited
 Payment Rails
   No active payment rails
-WarmStorage Usage
-  No active spend detected
-Status check complete
 ```
 
-**What happened:**
-- Locked ~98 FIL as collateral
-- Minted 200 USDFC
-- Remaining: ~2 tFIL for gas fees
-- Next: Setup payments for storage
+> **Ready!** You have tFIL for gas and USDFC for storage payments.
 
 ---
 
-### Step 0.4: Create Environment File
+### Step 0.2: Create Environment File
 
 > I put my private key on this repo for DEMO purposes.  It is a TESTNET KEY.  **NEVER USE YOUR PRIVATE KEY IN A REPOSITORY OR EXPOSE IT**.
 
@@ -266,7 +159,7 @@ echo "RPC URL: $RPC_URL"
 
 ## Part 1: Filecoin Pin CLI Commands
 
-All commands in this section use the environment variables set in Part 0 (Step 0.4). If you're starting a new terminal session, reload them:
+All commands in this section use the environment variables set in Part 0 (Step 0.2). If you're starting a new terminal session, reload them:
 
 ```bash
 source ~/.filecoin-pin-env
