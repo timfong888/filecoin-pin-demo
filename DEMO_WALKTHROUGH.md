@@ -329,8 +329,6 @@ filecoin-pin payments setup --auto
 
 > **What `--auto` does**: Configures WarmStorage contract permissions automatically. No deposit required at this step - use `--auto-fund` when uploading to handle deposits automatically.
 
-> ⏱️ **Expected Duration**: 1-2 minutes (one blockchain confirmation)
-
 **Expected Output:**
 ```
 Filecoin Onchain Cloud Payment Setup
@@ -366,30 +364,6 @@ Status: Ready to upload with --auto-fund
 3. Configures WarmStorage contract permissions
 4. Completes setup - ready for uploads
 
-**Verify transaction on blockchain:**
-
-```bash
-# View in browser
-open "https://calibration.filfox.info/tx/0xf61d885b2316589efdcc6637e8b17c06c1439fefd626ba121a08023c0ebaf2a1"
-
-# Or verify from CLI
-cast receipt 0xf61d885b2316589efdcc6637e8b17c06c1439fefd626ba121a08023c0ebaf2a1 --rpc-url $RPC_URL
-```
-
-**Expected Output:**
-```
-blockHash            0x45c6f5eb9fc51cdaf9cbf3f9f0f26386bbee937a55349627637efba196001245
-blockNumber          3090160
-status               1 (success)
-from                 0x5a0c7D45C3834E4eB18c26C60932B757A43B7B0B
-gasUsed              31510988
-to                   0x1096025c9D6B29E12E2f04965F6E64d564Ce0750
-```
-
-**What to check:**
-- ✅ **status**: `1 (success)` means permissions configured successfully
-- ✅ **to**: WarmStorage contract (0x1096025c9D6B29E12E2f04965F6E64d564Ce0750)
-
 **Verify setup completed:**
 ```bash
 filecoin-pin payments status
@@ -422,9 +396,12 @@ Status check complete
 
 ---
 
-### Command 2b: Automatic Funding with --auto-fund Flag (v0.7.0+)
+[This is actually using `add` so it should be Step 3: Upload a File to Filecoin]
 
-> **Version requirement**: `--auto-fund` flag is available in v0.7.0 and later. Check your version with `filecoin-pin -V`.
+### Step 3: Upload File with Automatic Funding
+
+> **Version requirement**: `--auto-fund` flag is available in v0.7.0 and later. 
+> Check your version with `filecoin-pin -V`.
 
 Instead of managing deposits separately, use `--auto-fund` with `add` or `import` commands to automatically ensure 10-day payment runway before each upload:
 
@@ -472,163 +449,10 @@ Auto-funding completed:
   Transaction: 0x456...
 ```
 
-**When to use `--auto-fund`:**
-- CI/CD pipelines - Ensures consistent 10-day runway automatically
-- Automated workflows - "Set it and forget it" funding management
-- After initial setup - Maintains minimum runway without manual tracking
-- Multiple small uploads - Each upload checks and tops up if needed
-
-**When NOT to use `--auto-fund`:**
-- You want > 10 days runway (use `payments fund --days N` instead)
-- You want manual control over deposits
-- You're uploading many tiny files rapidly (overhead of checking each time)
-- You want to optimize for gas costs (batch deposits manually)
-
-> **Important**: `--auto-fund` is a flag for `add` and `import` commands, NOT for `payments setup`.
-
-**Comparison with manual funding:**
-
-| Aspect | `add --auto-fund` | `payments fund --days N` |
-|--------|-------------------|--------------------------|
-| **When** | Before each upload | Manually when you run it |
-| **Target runway** | Fixed 10 days | Configurable (N days) |
-| **Knows about new file** | Yes (calculates for upload) | No (based on current usage) |
-| **Use case** | Per-upload automation | Manual runway management |
-
 ---
 
-### Command 2c: Manual Payment Runway Adjustment
 
-Manually adjust your payment runway after uploading files (alternative to `--auto-fund`):
-
-**Set exact runway in days:**
-```bash
-filecoin-pin payments fund --days 57
-```
-
-**What this does:**
-1. Checks current deposit and actual spending rate (based on uploaded files)
-2. Calculates USDFC needed for exactly 57 days of runway
-3. **Deposits additional funds** if current runway < 57 days
-4. **Withdraws excess funds** if current runway > 57 days
-
-**Expected Output (needs more funds):**
-```
-Filecoin Onchain Cloud Payment Funding
-
-Current Status:
-  Deposited: 5.0 USDFC
-  Daily cost: 0.2 USDFC
-  Current runway: 25 days
-
-Target: 57 days runway
-Required deposit: 11.4 USDFC
-
-Action: Deposit additional 6.4 USDFC
-
-✓ Deposit transaction submitted
-✓ New deposit: 11.4 USDFC
-✓ New runway: 57 days
-```
-
-**Expected Output (has excess funds):**
-```
-Filecoin Onchain Cloud Payment Funding
-
-Current Status:
-  Deposited: 50.0 USDFC
-  Daily cost: 0.1 USDFC
-  Current runway: 500 days
-
-Target: 57 days runway
-Required deposit: 5.7 USDFC
-
-Action: Withdraw 44.3 USDFC
-
-✓ Withdrawal transaction submitted
-✓ New deposit: 5.7 USDFC
-✓ New runway: 57 days
-```
-
-**Set exact deposit amount:**
-```bash
-filecoin-pin payments fund --amount 100
-```
-
-**What this does:**
-- Sets your total deposit to **exactly 100 USDFC**
-- Adds funds if current deposit < 100
-- Withdraws if current deposit > 100
-
-**Expected Output:**
-```
-Filecoin Onchain Cloud Payment Funding
-
-Current deposit: 50.0 USDFC
-Target deposit: 100.0 USDFC
-
-Action: Deposit additional 50.0 USDFC
-
-✓ Deposit transaction submitted
-✓ New deposit: 100.0 USDFC
-✓ Estimated runway: 1000 days (at current usage rate)
-```
-
----
-
-### When to Use Setup vs Fund vs Auto-Fund
-
-| Scenario | Command | Why |
-|----------|---------|-----|
-| **First time ever** | `payments setup --auto --deposit 50` | Initial setup + permissions + specific deposit |
-| **New wallet** | `payments setup --auto --deposit 100` | Need to configure permissions for new address |
-| **Automated uploads (CI/CD)** | `add --auto-fund <file>` | Auto-maintains 10-day runway before each upload |
-| **After uploading files manually** | `payments fund --days 60` | Adjust based on ACTUAL usage after uploading data |
-| **Want longer runway** | `payments fund --days 90` | Set specific runway > 10 days |
-| **Running low on funds** | `payments fund --days 30` | Top up without reconfiguring permissions |
-| **Withdraw excess** | `payments fund --amount 20` | Reduce deposit if you over-funded initially |
-
-> ⚠️ **Important**: You only run `setup` **once per wallet** to configure permissions. After that, use either `add --auto-fund` (automatic) or `payments fund` (manual) to manage deposits.
-
-**Recommended Workflow Option 1: Automatic (with --auto-fund)**
-
-1. **Initial setup**: `payments setup --auto --deposit 50`
-2. **Upload with auto-funding**: `add --auto-fund myfile.txt`
-3. **Monitor**: `payments status` (check current runway)
-4. **Repeat step 2** as needed - auto-funding maintains 10-day minimum
-
-**Recommended Workflow Option 2: Manual (without --auto-fund)**
-
-1. **Initial setup**: `payments setup --auto --deposit 100`
-2. **Upload files**: `add myfile.txt` (multiple times as needed)
-3. **Adjust funding**: `payments fund --days 30` (adjusts based on your actual usage)
-4. **Monitor**: `payments status` (check current runway)
-5. **Repeat steps 2-4** as you upload more files
-
-**Use Case Example - GitHub Actions with Auto-Fund:**
-
-```yaml
-- name: Upload to Filecoin (with auto-funding)
-  run: filecoin-pin add --auto-fund ./dist
-```
-
-**Use Case Example - GitHub Actions with Manual Fund:**
-
-```yaml
-- name: Upload to Filecoin
-  run: filecoin-pin add ./dist
-
-- name: Ensure 30-day runway
-  run: filecoin-pin payments fund --days 30
-```
-
-The auto-fund approach is simpler (one command), while manual funding gives you more control over runway duration.
-
----
-
-### Command 3: Upload a File to Filecoin
-
-Create a CAR file and upload it to Filecoin with PDP proofs:
+### Step4a: Upload a File to Filecoin
 
 ```bash
 # Create test file
@@ -693,11 +517,11 @@ Add completed successfully
 - **Transaction**: `0xc85e49d2ed745cc8c5d7115e7c45a1243ec25da7e73e224a744887783afea42b` - Blockchain confirmation hash
 - **Direct Download URL**: Direct link to retrieve your data from the storage provider
 
-✅ **Your file is now permanently stored on Filecoin with ongoing proof of possession!**
+✅ **Your file is now stored on Filecoin with ongoing proof of possession!**
 
 ---
 
-### Command 4: Upload Directory
+### Step 4b: Upload Directory
 
 Package multiple files into a single CAR:
 
@@ -708,8 +532,8 @@ echo "File 1" > my-data/file1.txt
 echo "File 2" > my-data/file2.txt
 echo "File 3" > my-data/file3.txt
 
-# Upload entire directory
-filecoin-pin add my-data/
+# Upload entire directory with auto-funding
+filecoin-pin add --auto-fund my-data/
 ```
 
 > ⏱️ **Expected Duration**: 2-5 minutes (waiting for blockchain confirmation)
@@ -756,8 +580,6 @@ Transaction
 Add completed successfully
 ```
 
-![Upload Directory Output](screenshots/11-upload-directory.png)
-
 **Key details:**
 - **Root CID**: `bafybeig27btater5fpt3l67gbme3sebqk3ynwdhlbrbuk3q7espiyplan4` - IPFS directory structure
 - **Size**: 433.0 B - Includes all files plus directory metadata
@@ -779,38 +601,6 @@ View all data sets you've created:
 filecoin-pin data-set --ls
 ```
 
-**Expected Output:**
-```
-Filecoin Onchain Cloud Data Sets
-
-━━━ Data Sets ━━━
-
-Address: 0x5a0c7D45C3834E4eB18c26C60932B757A43B7B0B
-Network: calibration
-
-#325 • live • managed
-  Provider: ezpdpz-calib (ID 3)
-  Pieces stored: 2
-  Leaf count: unknown
-  Total size: unknown
-  Client data set ID: 0
-  PDP rail ID: 631
-  CDN rail ID: none
-  Cache-miss rail ID: none
-  Payer: 0x5a0c7D45C3834E4eB18c26C60932B757A43B7B0B
-  Payee: 0xa3971A7234a3379A1813d9867B531e7EeB20ae07
-
-  Metadata
-    source: filecoin-pin
-    withIPFSIndexing: (empty)
-
-  Pieces
-    No piece information available
-
-Data set inspection complete
-```
-
-![List Data Sets](screenshots/13-list-datasets.png)
 
 **Key information:**
 - **Data Set #325**: Contains all our uploads (both the single file and directory)
@@ -823,7 +613,7 @@ Data set inspection complete
 
 ---
 
-### Command 6: Inspect Specific Data Set
+### Step 6: Inspect Specific Data Set
 
 Get detailed information about a specific data set (this queries the blockchain directly):
 
